@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1b1938"
+    tools:context=".features.routing.RoundTripActivity">
+
+    <!-- Title Bar -->
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Round Trip Generator"
+        android:textColor="#e9e5dd"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:padding="16dp"
+        android:background="#292827"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Trip Summary Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cvTripSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:layout_marginTop="8dp"
+        app:cardBackgroundColor="#292827"
+        app:cardCornerRadius="16dp"
+        app:layout_constraintTop_toBottomOf="@id/tvTitle">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Outbound Leg -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Outbound Leg"
+                android:textColor="#cbb7fb"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Distance:"
+                    android:textColor="#dcd7d3"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvOutboundDistance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0 km"
+                    android:textColor="#e9e5dd"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="ETA:"
+                    android:textColor="#dcd7d3"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvOutboundEta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-- min"
+                    android:textColor="#e9e5dd"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Return Leg -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Return Leg"
+                android:textColor="#cbb7fb"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Distance:"
+                    android:textColor="#dcd7d3"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvReturnDistance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0 km"
+                    android:textColor="#e9e5dd"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="ETA:"
+                    android:textColor="#dcd7d3"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvReturnEta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-- min"
+                    android:textColor="#e9e5dd"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Totals -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#dcd7d3"
+                android:layout_marginVertical="12dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Total Distance:"
+                    android:textColor="#cbb7fb"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvTotalDistance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0 km"
+                    android:textColor="#e9e5dd"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Total ETA:"
+                    android:textColor="#cbb7fb"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvTotalEta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-- min"
+                    android:textColor="#e9e5dd"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Return Waypoint Section -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cvWaypoint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:layout_marginTop="8dp"
+        app:cardBackgroundColor="#292827"
+        app:cardCornerRadius="16dp"
+        app:layout_constraintTop_toBottomOf="@id/cvTripSummary">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Return Waypoint"
+                android:textColor="#cbb7fb"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <EditText
+                    android:id="@+id/etWaypointLat"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:hint="Lat"
+                    android:textColorHint="#714cb6"
+                    android:textColor="#e9e5dd"
+                    android:textSize="14sp"
+                    android:inputType="numberDecimal" />
+
+                <EditText
+                    android:id="@+id/etWaypointLng"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:hint="Lng"
+                    android:textColorHint="#714cb6"
+                    android:textColor="#e9e5dd"
+                    android:textSize="14sp"
+                    android:inputType="numberDecimal" />
+
+                <EditText
+                    android:id="@+id/etWaypointName"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:hint="Name"
+                    android:textColorHint="#714cb6"
+                    android:textColor="#e9e5dd"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Strategy Selection -->
+    <LinearLayout
+        android:id="@+id/llStrategy"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="16dp"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@id/cvWaypoint">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Return Strategy:"
+            android:textColor="#dcd7d3"
+            android:textSize="14sp"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/btnStrategyMidpoint"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:text="Midpoint"
+            android:textSize="12sp"
+            android:backgroundTint="#714cb6"
+            android:textColor="#e9e5dd"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btnStrategyShorter"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:text="Shorter"
+            android:textSize="12sp"
+            android:backgroundTint="#292827"
+            android:textColor="#e9e5dd"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btnStrategyScenic"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:text="Scenic"
+            android:textSize="12sp"
+            android:backgroundTint="#292827"
+            android:textColor="#e9e5dd" />
+    </LinearLayout>
+
+    <!-- Generate Button -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cvGenerate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:layout_marginBottom="8dp"
+        app:cardBackgroundColor="#cbb7fb"
+        app:cardCornerRadius="16dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <Button
+            android:id="@+id/btnGenerateTrip"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Generate Round Trip"
+            android:textColor="#1b1938"
+            android:textStyle="bold"
+            android:backgroundTint="#cbb7fb" />
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

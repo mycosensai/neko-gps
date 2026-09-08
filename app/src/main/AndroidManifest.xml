@@ -95,6 +95,64 @@
             android:exported="false"
             android:theme="@style/Theme.NekoGps" />
 
+        <!-- Gamification Activities -->
+        <activity
+            android:name=".features.gamification.AchievementActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NekoGps" />
+
+        <activity
+            android:name=".features.gamification.LeaderboardActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NekoGps" />
+
+        <activity
+            android:name=".features.gamification.LocationChallengeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NekoGps" />
+
+        <activity
+            android:name=".features.gamification.PhotoWaypointActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NekoGps"
+            android:hardwareAccelerated="true" />
+
+        <activity
+        android:name=".features.routing.RouteOptionsActivity"
+        android:exported="false"
+        android:theme="@style/Theme.NekoGps" />
+
+        <activity
+        android:name=".features.routing.AlternativeRoutesActivity"
+        android:exported="false"
+        android:theme="@style/Theme.NekoGps" />
+
+        <activity
+        android:name=".features.routing.RoundTripActivity"
+        android:exported="false"
+        android:theme="@style/Theme.NekoGps" />
+
+        <!-- Phase 4: Fuel Price, Odometer, Statistics, Route Replay -->
+        <activity
+            android:name=".features.stats.FuelPriceActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NekoGps" />
+
+        <activity
+            android:name=".features.stats.OdometerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NekoGps" />
+
+        <activity
+            android:name=".features.stats.StatisticsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NekoGps" />
+
+        <activity
+            android:name=".features.stats.RouteReplayActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NekoGps" />
+
         <service
             android:name=".service.LocationTrackingService"
             android:enabled="true"

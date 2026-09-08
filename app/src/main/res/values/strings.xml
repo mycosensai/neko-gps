@@ -148,7 +148,7 @@
     <string name="add_waypoint">Add Waypoint</string>
     <string name="delete_waypoint">Delete Waypoint</string>
     <string name="waypoint_name">Waypoint Name</string>
-    <string name="total_eta">ETA</string>
+    <string name="total_eta_waypoint">ETA</string>
     <string name="waypoint_count">%d waypoints</string>
     <string name="drag_to_reorder">Drag to reorder</string>
 
@@ -186,4 +186,152 @@
     <string name="slow_down">⚠️ SLOW DOWN</string>
     <string name="eta">ETA</string>
 
+    <!-- Gamification: Achievements -->
+
+    <!-- Route Options Strings -->
+    <string name="route_options">Route Options</string>
+    <string name="avoid_tolls">Avoid Tolls</string>
+    <string name="avoid_highways">Avoid Highways</string>
+    <string name="avoid_ferries">Avoid Ferries</string>
+    <string name="route_preferences">Route Preferences</string>
+    <string name="penalty_multiplier">Penalty Multiplier</string>
+    <string name="toll_penalty">Toll Penalty</string>
+    <string name="highway_penalty">Highway Penalty</string>
+    <string name="ferry_penalty">Ferry Penalty</string>
+    <string name="apply_preferences">Apply Preferences</string>
+    <string name="route_options_summary">Customize route avoidance settings</string>
+
+    <!-- Alternative Routes Strings -->
+    <string name="alternative_routes">Alternative Routes</string>
+    <string name="shortest_route">Shortest Route</string>
+    <string name="fastest_route">Fastest Route</string>
+    <string name="scenic_route">Scenic Route</string>
+    <string name="route_found">%d alternative routes found</string>
+    <string name="select_this_route">Select This Route</string>
+    <string name="no_routes_found">No alternative routes available</string>
+
+    <!-- Round Trip Strings -->
+    <string name="round_trip">Round Trip</string>
+    <string name="round_trip_generator">Round Trip Generator</string>
+    <string name="outbound_leg">Outbound Leg</string>
+    <string name="return_leg">Return Leg</string>
+    <string name="round_trip_total_eta">Total ETA</string>
+    <string name="return_waypoint">Return Waypoint</string>
+    <string name="generate_round_trip">Generate Round Trip</string>
+    <string name="round_trip_summary">Round Trip Summary</string>
+    <string name="waypoint_lat">Waypoint Latitude</string>
+    <string name="waypoint_lng">Waypoint Longitude</string>
+    <string name="round_trip_waypoint_name">Waypoint Name</string>
+    <string name="return_strategy">Return Strategy</string>
+    <string name="strategy_midpoint">Midpoint</string>
+    <string name="strategy_shorter">Shorter Return</string>
+    <string name="strategy_scenic">Scenic</string>
+    <string name="round_trip_complete">Round trip generated successfully</string>
+
+    <!-- Gamification: Achievements -->
+    <string name="achievements">Achievements</string>
+    <string name="achievement_unlocked">Achievement Unlocked!</string>
+    <string name="first_km">First Kilometer</string>
+    <string name="first_km_desc">Travel your first 1 km</string>
+    <string name="first_10km">Ten Klicks</string>
+    <string name="first_10km_desc">Travel 10 km total</string>
+    <string name="first_100km">Century Club</string>
+    <string name="first_100km_desc">Travel 100 km total</string>
+    <string name="first_1000km">Kilometer King</string>
+    <string name="first_1000km_desc">Travel 1000 km total</string>
+    <string name="first_bookmark">Bookworm</string>
+    <string name="first_bookmark_desc">Create your first bookmark</string>
+    <string name="ten_bookmarks">Bookmark Collector</string>
+    <string name="ten_bookmarks_desc">Create 10 bookmarks</string>
+    <string name="first_track">Pathfinder</string>
+    <string name="first_track_desc">Record your first track</string>
+    <string name="five_tracks">Explorer</string>
+    <string name="five_tracks_desc">Record 5 tracks</string>
+    <string name="first_photo_waypoint">Photographer</string>
+    <string name="first_photo_waypoint_desc">Take your first photo waypoint</string>
+    <string name="five_photo_waypoints">Photo Album</string>
+    <string name="five_photo_waypoints_desc">Take 5 photo waypoints</string>
+    <string name="first_challenge">Challenge Accepted</string>
+    <string name="first_challenge_desc">Complete your first location challenge</string>
+    <string name="three_challenges">Challenge Master</string>
+    <string name="three_challenges_desc">Complete 3 location challenges</string>
+    <string name="first_navigation">Navigator</string>
+    <string name="first_navigation_desc">Complete your first navigation</string>
+    <string name="speed_demon">Speed Demon</string>
+    <string name="speed_demon_desc">Reach a max speed of 150 km/h</string>
+    <string name="unlocked">Unlocked</string>
+    <string name="locked">Locked</string>
+    <string name="check_achievements">Check Achievements</string>
+    <string name="stats_format">%1$d / %2$d Unlocked</string>
+
+    <!-- Gamification: Leaderboard -->
+    <string name="leaderboard">Leaderboard</string>
+    <string name="add_friend">Add Friend</string>
+    <string name="friend_added">Friend added!</string>
+    <string name="rank">Rank</string>
+    <string name="distance_km">%.1f km</string>
+
+    <!-- Gamification: Location Challenges -->
+    <string name="location_challenges">Location Challenges</string>
+    <string name="visit_5_locations">World Traveler</string>
+    <string name="visit_5_locations_desc">Visit 5 different locations</string>
+    <string name="drive_50km_day">Daily Commuter</string>
+    <string name="drive_50km_day_desc">Drive 50 km in a single day</string>
+    <string name="drive_200km_day">Road Tripper</string>
+    <string name="drive_200km_day_desc">Drive 200 km in a single day</string>
+    <string name="visit_10_bookmarks">Bookmark Explorer</string>
+    <string name="visit_10_bookmarks_desc">Visit 10 different bookmarks</string>
+    <string name="track_star">Track Star</string>
+    <string name="track_star_desc">Record 100 tracks</string>
+    <string name="photo_enthusiast">Photo Enthusiast</string>
+    <string name="photo_enthusiast_desc">Take 500 photos at waypoints</string>
+    <string name="achievement_hunter">Achievement Hunter</string>
+    <string name="achievement_hunter_desc">Unlock 10 achievements</string>
+    <string name="init_challenges">Initialize Challenges</string>
+    <string name="challenge_reset">Challenge reset</string>
+    <string name="challenge_completed">Challenge completed!</string>
+
+    <!-- Gamification: Photo Waypoints -->
+    <string name="photo_waypoint">Photo Waypoint</string>
+    <string name="capture_photo">Capture Photo</string>
+    <string name="save_photo_waypoint">Save Photo Waypoint</string>
+    <string name="photo_saved">Photo saved!</string>
+    <string name="no_photo">No photo captured</string>
+    <string name="caption">Caption</string>
+    <string name="camera">Camera</string>
+
+    <!-- Phase 4: Fuel Price Comparison -->
+    <string name="fuel_price_comparison">Fuel Price Comparison</string>
+    <string name="nearest_stations_sorted">Nearest stations, sorted by price</string>
+    <string name="fuel_filter">Fuel Type Filter</string>
+    <string name="all_fuel_types">All</string>
+    <string name="toggle_unit">L / gal</string>
+    <string name="gal_per_liter">gal / L</string>
+    <string name="no_fuel_nearby">No fuel stations found nearby</string>
+    <string name="station_name">Station Name</string>
+    <string name="station_brand">Brand</string>
+    <string name="station_address">Address</string>
+
+    <!-- Phase 4: Odometer -->
+    <string name="odometer">Odometer</string>
+    <string name="lifetime_distance_tracker">Lifetime distance tracker</string>
+    <string name="lifetime_total">Lifetime Total</string>
+    <string name="recent_trips">Recent Trips</string>
+    <string name="clear_all_data">Clear All Data</string>
+    <string name="all_data_cleared">All odometer data cleared</string>
+    <string name="trip_count">%d trips recorded</string>
+
+    <!-- Phase 4: Statistics Dashboard -->
+    <string name="statistics_dashboard">Statistics Dashboard</string>
+    <string name="distance_speed_time_analysis">Distance, speed &amp; time analysis</string>
+
+    <!-- Phase 4: Route History/Replay -->
+    <string name="route_replay">Route Replay</string>
+    <string name="select_a_route_to_replay">Select a route to replay</string>
+    <string name="route_name">Route Name</string>
+    <string name="select_route_round_trip">Select Route</string>
+    <string name="route_playback_progress">%1$d / %2$d points</string>
+    <string name="no_saved_routes">No saved routes found</string>
+    <!-- Navigation -->
+    <string name="back_to_map">Back to Map</string>
 </resources>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="4dp"
+    app:cardBackgroundColor="#292827"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
+    app:strokeColor="#cbb7fb"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:gravity="center_vertical">
+
+        <!-- Rank Icon -->
+        <TextView
+            android:id="@+id/ivRankIcon"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:textColor="#cbb7fb"
+            android:textStyle="bold"
+            android:background="@drawable/circle_bg_dark"
+            android:layout_marginEnd="12dp" />
+
+        <!-- Player Info -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvPlayerName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Player Name"
+                android:textColor="#cbb7fb"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvPlayerDistance"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="0.0 km"
+                android:textColor="#e9e5dd"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tvPlayerTracks"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Tracks: 0"
+                android:textColor="#714cb6"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Delete Friend Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDeleteFriend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="✕"
+            android:textSize="12sp"
+            android:minWidth="36dp"
+            android:minHeight="36dp"
+            app:backgroundTint="#F44336"
+            android:textColor="#ffffff"
+            app:cornerRadius="8dp" />
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

@@ -1,0 +1,102 @@
+[
+  {
+    "id": "fs_001",
+    "name": "NekoGas Downtown",
+    "brand": "NekoGas",
+    "address": "123 Main St, Downtown",
+    "latitude": 40.7128,
+    "longitude": -74.0060,
+    "pricePerLiter": 1.45,
+    "fuelType": "REGULAR"
+  },
+  {
+    "id": "fs_002",
+    "name": "LavenderFuel Station",
+    "brand": "LavenderFuel",
+    "address": "456 Elm Ave, Midtown",
+    "latitude": 40.7150,
+    "longitude": -74.0080,
+    "pricePerLiter": 1.38,
+    "fuelType": "REGULAR"
+  },
+  {
+    "id": "fs_003",
+    "name": "PurpleGrip Diesel",
+    "brand": "PurpleGrip",
+    "address": "789 Oak Blvd, Uptown",
+    "latitude": 40.7100,
+    "longitude": -74.0030,
+    "pricePerLiter": 1.52,
+    "fuelType": "DIESEL"
+  },
+  {
+    "id": "fs_004",
+    "name": "Mysteria Premium",
+    "brand": "Mysteria",
+    "address": "321 Park Rd, Central",
+    "latitude": 40.7200,
+    "longitude": -74.0100,
+    "pricePerLiter": 1.75,
+    "fuelType": "PREMIUM"
+  },
+  {
+    "id": "fs_005",
+    "name": "CreamCity Gas",
+    "brand": "CreamCity",
+    "address": "654 Hill St, Northside",
+    "latitude": 40.7080,
+    "longitude": -73.9990,
+    "pricePerLiter": 1.42,
+    "fuelType": "REGULAR"
+  },
+  {
+    "id": "fs_006",
+    "name": "AmberFuel LPG",
+    "brand": "AmberFuel",
+    "address": "987 Lane Ave, Eastside",
+    "latitude": 40.7140,
+    "longitude": -74.0120,
+    "pricePerLiter": 0.95,
+    "fuelType": "LPG"
+  },
+  {
+    "id": "fs_007",
+    "name": "GlowStation Diesel",
+    "brand": "GlowStation",
+    "address": "111 Way Ln, Westend",
+    "latitude": 40.7050,
+    "longitude": -74.0050,
+    "pricePerLiter": 1.49,
+    "fuelType": "DIESEL"
+  },
+  {
+    "id": "fs_008",
+    "name": "Ember Premium Plus",
+    "brand": "Ember",
+    "address": "222 Crest Dr, Southgate",
+    "latitude": 40.7180,
+    "longitude": -74.0010,
+    "pricePerLiter": 1.80,
+    "fuelType": "PREMIUM"
+  },
+  {
+    "id": "fs_009",
+    "name": "Twilight Fuel Co.",
+    "brand": "Twilight",
+    "address": "333 Dusk Blvd, Midtown",
+    "latitude": 40.7110,
+    "longitude": -74.0070,
+    "pricePerLiter": 1.40,
+    "fuelType": "REGULAR"
+  },
+  {
+    "id": "fs_010",
+    "name": "Nova Diesel Hub",
+    "brand": "Nova",
+    "address": "444 Nova Rd, Downtown",
+    "latitude": 40.7130,
+    "longitude": -74.0040,
+    "pricePerLiter": 1.55,
+    "fuelType": "DIESEL"
+  }
+]

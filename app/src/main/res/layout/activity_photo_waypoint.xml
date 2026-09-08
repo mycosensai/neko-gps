@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1b1938"
+    tools:context=".features.gamification.PhotoWaypointActivity">
+
+    <!-- Header -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cvHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:cardBackgroundColor="#292827"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#cbb7fb"
+        app:strokeWidth="1dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📸"
+                android:textSize="24sp"
+                android:layout_marginEnd="12dp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Photo Waypoint"
+                    android:textColor="#cbb7fb"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Capture &amp; attach photos"
+                    android:textColor="#e9e5dd"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Photo Preview -->
+    <ImageView
+        android:id="@+id/ivCapturePreview"
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        android:layout_margin="16dp"
+        android:scaleType="centerCrop"
+        android:src="@android:drawable/ic_menu_gallery"
+        app:layout_constraintTop_toBottomOf="@id/cvHeader" />
+
+    <!-- Caption Input -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilCaption"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:hint="Caption"
+        app:layout_constraintTop_toBottomOf="@id/ivCapturePreview">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etCaption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Capture Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCapturePhoto"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="📷 Capture Photo"
+        android:textSize="14sp"
+        app:backgroundTint="#cbb7fb"
+        app:tint="#1b1938"
+        app:layout_constraintTop_toBottomOf="@id/tilCaption"
+        app:layout_constraintStart_toStartOf="@id/tilCaption"
+        app:layout_constraintEnd_toStartOf="@id/btnUseCamera"
+        app:layout_constraintHorizontal_chainStyle="spread" />
+
+    <!-- Use Camera Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnUseCamera"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="📷 Camera"
+        android:textSize="14sp"
+        app:backgroundTint="#cbb7fb"
+        app:tint="#1b1938"
+        app:layout_constraintTop_toBottomOf="@id/tilCaption"
+        app:layout_constraintStart_toStartOf="@id/btnCapturePhoto"
+        app:layout_constraintEnd_toEndOf="@id/tilCaption" />
+
+    <!-- Save Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSavePhoto"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="💾 Save Photo Waypoint"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:backgroundTint="#4CAF50"
+        app:tint="#ffffff"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_margin="16dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

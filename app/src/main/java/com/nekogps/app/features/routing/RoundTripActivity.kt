@@ -1,7 +1,7 @@
 package com.nekogps.app.features.routing
 
 import android.os.Bundle
-import android.widget.Button
+import com.google.android.material.button.MaterialButton
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -41,7 +41,7 @@ class RoundTripActivity : AppCompatActivity() {
         highlightBtn(binding.btnStrategyMidpoint)
     }
 
-    private fun highlightBtn(selected: Button) {
+    private fun highlightBtn(selected: MaterialButton) {
         val sel = R.color.lavender_glow
         val norm = R.color.charcoal_ink
         binding.btnStrategyMidpoint.setBackgroundColor(ContextCompat.getColor(this, if (selected == binding.btnStrategyMidpoint) sel else norm))

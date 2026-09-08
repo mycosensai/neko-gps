@@ -56,7 +56,7 @@ class FuelPriceManager(private val context: Context) {
         }
 
         val json = context.assets.open("fuel_stations.json").bufferedReader().use { it.readText() }
-        val stations = gson.fromJson<List<FuelStation>>(json, object : TypeToken<List<FuelStation>>(){}.type)
+        val stations: List<FuelStation> = gson.fromJson(json, object : TypeToken<List<FuelStation>>(){}.type)
         prefs.edit().putString(KEY_STATIONS, json).putLong(KEY_LAST_FETCH, now).apply()
         return stations
     }

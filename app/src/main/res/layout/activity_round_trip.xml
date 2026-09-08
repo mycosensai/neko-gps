@@ -293,7 +293,7 @@
             android:textSize="14sp"
             android:layout_marginEnd="8dp" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStrategyMidpoint"
             android:layout_width="0dp"
             android:layout_height="36dp"
@@ -304,7 +304,7 @@
             android:textColor="#e9e5dd"
             android:layout_marginEnd="4dp" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStrategyShorter"
             android:layout_width="0dp"
             android:layout_height="36dp"
@@ -315,7 +315,7 @@
             android:textColor="#e9e5dd"
             android:layout_marginEnd="4dp" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStrategyScenic"
             android:layout_width="0dp"
             android:layout_height="36dp"
@@ -337,7 +337,7 @@
         app:cardCornerRadius="16dp"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnGenerateTrip"
             android:layout_width="match_parent"
             android:layout_height="48dp"

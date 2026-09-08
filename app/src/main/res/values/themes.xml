@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Theme.NekoGps" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/lavender_glow</item>
+        <item name="colorPrimaryVariant">@color/mysteria_purple</item>
+        <item name="colorOnPrimary">@color/mysteria_purple</item>
+        <item name="colorSecondary">@color/amethyst_link</item>
+        <item name="colorOnSecondary">@color/pure_white</item>
+        <item name="android:colorBackground">@color/mysteria_purple</item>
+        <item name="colorSurface">@color/charcoal_ink</item>
+        <item name="colorOnSurface">@color/warm_cream</item>
+        <item name="android:statusBarColor">@color/mysteria_purple</item>
+        <item name="android:navigationBarColor">@color/mysteria_purple</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="materialAlertDialogTheme">@style/Theme.NekoGps.Dialog</item>
+    </style>
+
+    <style name="Theme.NekoGps.Splash" parent="Theme.NekoGps">
+        <item name="android:windowBackground">@color/mysteria_purple</item>
+    </style>
+
+    <style name="Theme.NekoGps.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorPrimary">@color/lavender_glow</item>
+        <item name="colorSurface">@color/charcoal_ink</item>
+        <item name="colorOnSurface">@color/warm_cream</item>
+    </style>
+
+    <style name="NekoButton" parent="Widget.Material3.Button">
+        <item name="android:textColor">@color/mysteria_purple</item>
+        <item name="backgroundTint">@color/lavender_glow</item>
+        <item name="cornerRadius">8dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="NekoCard" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardBackgroundColor">@color/charcoal_ink</item>
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeColor">@color/parchment_border</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+</resources>

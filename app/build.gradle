@@ -1,0 +1,115 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android' version '1.9.10'
+}
+
+android {
+    namespace 'com.nekogps.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.nekogps.app"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+        
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary true
+        }
+    }
+
+    signingConfigs {
+        release {
+            storeFile file('../release.keystore')
+            storePassword 'nekogps123'
+            keyAlias 'nekogps'
+            keyPassword 'nekogps123'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+        debug {
+            minifyEnabled false
+        }
+    }
+    
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+    
+    buildFeatures {
+        viewBinding true
+    }
+    
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+    
+    lintOptions {
+        abortOnError false
+    }
+}
+
+dependencies {
+    // Core
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.10.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    
+    // Navigation
+    implementation "androidx.navigation:navigation-fragment-ktx:2.7.4"
+    implementation "androidx.navigation:navigation-ui-ktx:2.7.4"
+    
+    // Lifecycle
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.6.2"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.6.2"
+    
+    // Coroutines
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    
+    // Location & GPS
+    implementation 'com.google.android.gms:play-services-location:20.0.0'
+    
+    // OpenStreetMap
+    implementation 'org.osmdroid:osmdroid-android:6.1.17'
+    
+    // Room
+    implementation "androidx.room:room-runtime:2.5.2"
+    implementation "androidx.room:room-ktx:2.5.2"
+    annotationProcessor "androidx.room:room-compiler:2.5.2"
+    
+    // DataStore
+    implementation "androidx.datastore:datastore-preferences:1.0.0"
+    
+    // Splash screen
+    implementation 'androidx.core:core-splashscreen:1.0.1'
+    
+    // RecyclerView
+    implementation "androidx.recyclerview:recyclerview:1.3.1"
+    
+    // CardView
+    implementation "androidx.cardview:cardview:1.0.0"
+    
+    // JSON
+    implementation 'com.google.code.gson:gson:2.10.1'
+    
+    // Testing
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+}

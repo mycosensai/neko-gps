@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1b1938">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tvDetailName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Track Name"
+            android:textColor="#cbb7fb"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvDetailDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Jan 1, 2024"
+            android:textColor="#dcd7d3"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp" />
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="#292827"
+            app:cardCornerRadius="16dp"
+            app:strokeColor="#dcd7d3"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Statistics"
+                    android:textColor="#cbb7fb"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:id="@+id/tvDetailDistance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Distance: 0 km"
+                    android:textColor="#e9e5dd"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvDetailDuration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Duration: 0 min"
+                    android:textColor="#e9e5dd"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvDetailPoints"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Points: 0"
+                    android:textColor="#e9e5dd"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvDetailAvgSpeed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Avg Speed: 0 km/h"
+                    android:textColor="#e9e5dd"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvDetailMaxSpeed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Max Speed: 0 km/h"
+                    android:textColor="#e9e5dd"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvDetailElevation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Elevation Gain: 0 m"
+                    android:textColor="#e9e5dd"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <Button
+            android:id="@+id/btnExportTrack"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="16dp"
+            android:backgroundTint="#cbb7fb"
+            android:text="Export as GPX"
+            android:textColor="#1b1938"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnDeleteTrack"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="#292827"
+            android:text="Delete Track"
+            android:textColor="#e9e5dd"
+            android:textStyle="bold" />
+    </LinearLayout>
+</ScrollView>

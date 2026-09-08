@@ -1,0 +1,33 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local config
+local.properties
+release.keystore
+*.keystore
+*.jks
+.gradle_env
+
+# Android Studio / IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+
+# Build outputs (keep only the release APK)
+/app/build/
+!/app/build/outputs/apk/release/app-release.apk
+
+# NDK
+.externalNativeBuild
+.cxx/
+
+# Captures
+/captures
+
+# System
+*.log
+*.swp

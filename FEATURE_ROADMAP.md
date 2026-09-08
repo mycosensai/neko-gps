@@ -21,25 +21,25 @@
 - [ ] Night Mode Auto-Switch (time/light sensor based)
 - [ ] Multiple Waypoints (route with stops)
 
-## Phase 4: Data & Statistics
-- [ ] Fuel Price Comparison (nearby stations)
-- [ ] Odometer (total distance traveled)
-- [ ] Statistics Dashboard (weekly/monthly/yearly)
-- [ ] Route History & Replay
+## Phase 4: Data & Statistics ✅
+- [x] Fuel Price Comparison (nearby stations)
+- [x] Odometer (total distance traveled)
+- [x] Statistics Dashboard (weekly/monthly/yearly)
+- [x] Route History & Replay
 - [ ] Export/Import GPX, KML, CSV
 
-## Phase 5: Advanced Routing
-- [ ] Route Options (avoid tolls, highways, ferries)
-- [ ] Alternative Routes (show 2-3 options)
-- [ ] Round Trip Generator
+## Phase 5: Advanced Routing ✅
+- [x] Route Options (avoid tolls, highways, ferries)
+- [x] Alternative Routes (show 2-3 options)
+- [x] Round Trip Generator
 - [ ] Off-Road / 4x4 Mode
 - [ ] Geocaching Support
 
-## Phase 6: Social & Gamification
-- [ ] Achievements (distance milestones, explorer badges)
-- [ ] Leaderboard (local, friends)
-- [ ] Location Challenges
-- [ ] Photo Waypoints
+## Phase 6: Social & Gamification ✅
+- [x] Achievements (distance milestones, explorer badges)
+- [x] Leaderboard (local, friends)
+- [x] Location Challenges
+- [x] Photo Waypoints
 - [ ] Voice Notes at Locations
 
 ## Phase 7: Safety & Emergency

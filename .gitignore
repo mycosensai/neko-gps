@@ -1,0 +1,24 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Large build tools
+gradle-8.4/
+gradle-8.4-bin.zip
+gh.zip
+gh_extracted/
+
+# Local config
+local.properties
+release.keystore
+*.keystore
+*.jks
+.gradle_env
+setup_env.sh
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+*.log

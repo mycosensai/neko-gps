@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1b1938"
+    tools:context=".features.findmycar.FindMyCarActivity">
+
+    <!-- Header -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cvHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:cardBackgroundColor="#292827"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#cbb7fb"
+        app:strokeWidth="1dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🅿️"
+                android:textSize="24sp"
+                android:layout_marginEnd="12dp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Find My Car"
+                    android:textColor="#cbb7fb"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Walk back to your parking spot, nya~"
+                    android:textColor="#e9e5dd"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Parking Info Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cvParkingInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:cardBackgroundColor="#292827"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#cbb7fb"
+        app:strokeWidth="1dp"
+        app:layout_constraintTop_toBottomOf="@id/cvHeader">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tvParkingTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No parking saved"
+                android:textColor="#cbb7fb"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvParkingAddress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Tap + to save your parking location"
+                android:textColor="#e9e5dd"
+                android:textSize="14sp"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/tvParkingNote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="#dcd7d3"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#714cb6"
+                android:layout_marginVertical="12dp" />
+
+            <TextView
+                android:id="@+id/tvWalkingDistance"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="#e9e5dd"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tvWalkingTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="#e9e5dd"
+                android:textSize="14sp"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Parking Photo -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_margin="16dp"
+        app:cardBackgroundColor="#292827"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="#cbb7fb"
+        app:strokeWidth="1dp"
+        app:layout_constraintTop_toBottomOf="@id/cvParkingInfo"
+        app:layout_constraintBottom_toTopOf="@id/btnNavigateToCar">
+
+        <ImageView
+            android:id="@+id/ivParkingPhoto"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_location"
+            android:contentDescription="Parking photo" />
+    </androidx.cardview.widget.CardView>
+
+    <!-- Action Buttons -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnNavigateToCar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="8dp"
+        android:text="Navigate to Car"
+        android:textSize="14sp"
+        app:backgroundTint="#cbb7fb"
+        android:textColor="#1b1938"
+        app:cornerRadius="12dp"
+        app:layout_constraintBottom_toTopOf="@id/btnClearParking" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnClearParking"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="16dp"
+        android:text="Clear Parking"
+        android:textSize="14sp"
+        app:backgroundTint="#F44336"
+        android:textColor="#ffffff"
+        app:cornerRadius="12dp"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <!-- FAB Save Parking -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabSaveParking"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:contentDescription="Save Parking"
+        app:backgroundTint="#cbb7fb"
+        app:tint="#1b1938"
+        app:srcCompat="@drawable/ic_location"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Neko GPS</string>
+    <string name="app_tagline">Private Navigation, nya~</string>
+    <string name="gps_active">GPS Active</string>
+    <string name="waiting_for_signal">Waiting for signal...</string>
+    <string name="open_map">Open Map</string>
+    <string name="start_navigation">Start Navigation</string>
+    <string name="tracks">Tracks</string>
+    <string name="poi_search">POI Search</string>
+    <string name="settings">Settings</string>
+    <string name="search">Search</string>
+    <string name="destination_hint">Where to?</string>
+    <string name="go">Go</string>
+    <string name="stop">Stop</string>
+    <string name="start_nav">Start Navigation</string>
+    <string name="no_tracks">No tracks recorded yet</string>
+    <string name="search_places">Search places...</string>
+    <string name="restaurant">Restaurant</string>
+    <string name="hospital">Hospital</string>
+    <string name="gas">Gas</string>
+    <string name="hotel">Hotel</string>
+    <string name="park">Park</string>
+    <string name="map_layer">Map Layer</string>
+    <string name="gps_interval">GPS Update Interval</string>
+    <string name="distance_units">Distance Units</string>
+    <string name="metric">Metric (km)</string>
+    <string name="imperial">Imperial (mi)</string>
+    <string name="auto_center">Auto-center map on GPS</string>
+    <string name="theme">Theme</string>
+    <string name="dark">Dark</string>
+    <string name="light">Light</string>
+    <string name="system">System</string>
+    <string name="data_management">Data Management</string>
+    <string name="clear_all_tracks">Clear All Tracks</string>
+    <string name="export_gpx">Export All Data (GPX)</string>
+    <string name="about_text">Neko GPS v1.0.0\nMade with ❤️ by Neko-chan\nPrivate navigation, nya~</string>
+    <string name="total_tracks">Total Tracks</string>
+    <string name="total_distance">Total Distance</string>
+    <string name="recorded_tracks">Recorded Tracks</string>
+    <string name="export_all">Export All</string>
+
+    <!-- Weather Overlay Strings -->
+    <string name="weather_loading">Loading weather...</string>
+    <string name="weather_error">Weather unavailable</string>
+    <string name="weather_humidity">Humidity</string>
+    <string name="weather_wind">Wind</string>
+    <string name="weather_feels_like">Feels like</string>
+    <string name="weather_forecast">5-Day Forecast</string>
+    <string name="weather_api_key_hint">Enter OpenWeatherMap API key</string>
+    <string name="weather_cache_minutes">30</string>
+
+    <!-- Speed Limit Strings -->
+    <string name="speed_limit">Speed Limit</string>
+    <string name="speed_limit_unknown">--</string>
+    <string name="speed_warning">⚠️ OVER SPEED LIMIT</string>
+    <string name="speed_warning_message">⚠️ OVER LIMIT: %1$d / %2$d km/h</string>
+    <string name="speed_unit_kmh">km/h</string>
+    <string name="speed_unit_mph">mph</string>
+
+    <!-- Elevation Profile Strings -->
+    <string name="elevation_profile">Elevation Profile</string>
+    <string name="elevation_current">Current</string>
+    <string name="elevation_ascent">↑ %1$dm ascent</string>
+    <string name="elevation_descent">↓ %1$dm descent</string>
+    <string name="elevation_gain">Elevation Gain</string>
+    <string name="elevation_loss">Elevation Loss</string>
+    <string name="elevation_no_data">No elevation data available</string>
+    <string name="elevation_distance">%1$d km</string>
+
+    <!-- Traffic Layer Strings -->
+    <string name="traffic_layer">Traffic Layer</string>
+    <string name="traffic_on">Traffic layer ON</string>
+    <string name="traffic_off">Traffic layer OFF</string>
+    <string name="traffic_legend">Traffic</string>
+    <string name="traffic_free">No Traffic</string>
+    <string name="traffic_light">Light</string>
+    <string name="traffic_moderate">Moderate</string>
+    <string name="traffic_heavy">Heavy</string>
+    <string name="traffic_standstill">Standstill</string>
+
+    <!-- HUD Strings -->
+    <string name="hud_speed">%1$d</string>
+    <string name="hud_speed_unit">km/h</string>
+    <string name="hud_exit">Exit HUD</string>
+    <string name="hud_instruction_default">Continue straight</string>
+    <string name="hud_distance">%1$s m</string>
+    <string name="hud_eta">ETA %1$s</string>
+
+    <!-- Navigation Instructions -->
+    <string name="nav_head_north">Head north</string>
+    <string name="nav_head_northeast">Head northeast</string>
+    <string name="nav_head_east">Head east</string>
+    <string name="nav_head_southeast">Head southeast</string>
+    <string name="nav_head_south">Head south</string>
+    <string name="nav_head_southwest">Head southwest</string>
+    <string name="nav_head_west">Head west</string>
+    <string name="nav_head_northwest">Head northwest</string>
+    <string name="nav_continue">Continue</string>
+    <string name="nav_arrived">You have arrived at your destination!</string>
+
+    <!-- Bookmarks -->
+    <string name="bookmarks">Bookmarks</string>
+    <string name="add_bookmark">Add Bookmark</string>
+    <string name="bookmark_name">Name</string>
+    <string name="bookmark_description">Description</string>
+    <string name="bookmark_category">Category</string>
+    <string name="bookmark_home">Home</string>
+    <string name="bookmark_work">Work</string>
+    <string name="bookmark_favorite">Favorite</string>
+    <string name="bookmark_custom">Custom</string>
+    <string name="navigate_to_bookmark">Navigate</string>
+    <string name="delete_bookmark">Delete</string>
+    <string name="no_bookmarks">No bookmarks yet</string>
+
+    <!-- Find My Car -->
+    <string name="find_my_car">Find My Car</string>
+    <string name="save_parking">Save Parking</string>
+    <string name="clear_parking">Clear Parking</string>
+    <string name="navigate_to_car">Navigate to Car</string>
+    <string name="parking_time">Parked: %s</string>
+    <string name="walking_distance">Distance: %.0f m</string>
+    <string name="walking_time">Walking: ~%d min</string>
+    <string name="no_parking_saved">No parking saved</string>
+    <string name="parking_note">Note</string>
+    <string name="parking_level">Level</string>
+    <string name="parking_spot">Spot Number</string>
+
+    <!-- Share Location -->
+    <string name="share_location">Share Location</string>
+    <string name="share_via_sms">Share via SMS</string>
+    <string name="share_via_email">Share via Email</string>
+    <string name="share_via_message">Share via Messaging</string>
+    <string name="share_generic">Share via Other Apps</string>
+    <string name="open_in_maps">Open in Google Maps</string>
+    <string name="copy_link">Copy Link</string>
+    <string name="location_coordinates">Coordinates: %s</string>
+    <string name="location_address">Address: %s</string>
+
+    <!-- Night Mode -->
+    <string name="night_mode">Night Mode</string>
+    <string name="auto_night_mode">Auto Night Mode</string>
+    <string name="night_mode_sensor">Use Light Sensor</string>
+    <string name="night_mode_time">Based on Time</string>
+
+    <!-- Waypoints -->
+    <string name="waypoints">Waypoints</string>
+    <string name="add_waypoint">Add Waypoint</string>
+    <string name="delete_waypoint">Delete Waypoint</string>
+    <string name="waypoint_name">Waypoint Name</string>
+    <string name="total_eta">ETA</string>
+    <string name="waypoint_count">%d waypoints</string>
+    <string name="drag_to_reorder">Drag to reorder</string>
+
+    <!-- Trip Computer Strings -->
+    <string name="trip_computer">Trip Computer</string>
+    <string name="start_trip">Start Trip</string>
+    <string name="stop_trip">Stop Trip</string>
+    <string name="pause_trip">Pause</string>
+    <string name="resume_trip">Resume</string>
+    <string name="distance">Distance</string>
+    <string name="elapsed_time">Elapsed Time</string>
+    <string name="average_speed">Average Speed</string>
+    <string name="max_speed">Max Speed</string>
+    <string name="fuel_cost">Fuel Cost</string>
+    <string name="fuel_settings">Fuel Settings</string>
+    <string name="consumption">Consumption (L/100km)</string>
+    <string name="fuel_price">Fuel Price ($/L)</string>
+    <string name="current_speed">Current Speed</string>
+
+    <!-- Voice Navigation Strings -->
+    <string name="voice_navigation">Voice Navigation</string>
+    <string name="mute">Mute</string>
+    <string name="unmute">Unmute</string>
+    <string name="voice_instructions">Voice Instructions</string>
+
+    <!-- Speed Camera Strings -->
+    <string name="speed_camera_alert">Speed Camera Alert</string>
+    <string name="speed_camera_warning">Speed Camera Ahead!</string>
+    <string name="camera_ahead">Camera ahead</string>
+
+    <!-- HUD Strings -->
+    <string name="hud_mode">HUD Mode</string>
+    <string name="mirror_mode">Mirror Mode</string>
+    <string name="exit_hud">Exit HUD</string>
+    <string name="slow_down">⚠️ SLOW DOWN</string>
+    <string name="eta">ETA</string>
+
+</resources>

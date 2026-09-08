@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Name"
+        app:boxBackgroundColor="#292827"
+        app:boxStrokeColor="#cbb7fb"
+        android:textColorHint="#714cb6">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etBookmarkName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#e9e5dd" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:hint="Description"
+        app:boxBackgroundColor="#292827"
+        app:boxStrokeColor="#cbb7fb"
+        android:textColorHint="#714cb6">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etBookmarkDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#e9e5dd" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:hint="Latitude"
+        app:boxBackgroundColor="#292827"
+        app:boxStrokeColor="#cbb7fb"
+        android:textColorHint="#714cb6">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etBookmarkLat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal|numberSigned"
+            android:textColor="#e9e5dd" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:hint="Longitude"
+        app:boxBackgroundColor="#292827"
+        app:boxStrokeColor="#cbb7fb"
+        android:textColorHint="#714cb6">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etBookmarkLon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal|numberSigned"
+            android:textColor="#e9e5dd" />
+    </com.google.android.material.textfield.TextInputLayout>
+</LinearLayout>

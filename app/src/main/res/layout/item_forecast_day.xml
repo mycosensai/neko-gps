@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="6dp">
+
+    <TextView
+        android:id="@+id/tvForecastDay"
+        android:layout_width="60dp"
+        android:layout_height="wrap_content"
+        android:text="Mon 01"
+        android:textColor="#dcd7d3"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvForecastCondition"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Clear"
+        android:textColor="#e9e5dd"
+        android:textSize="12sp"
+        android:gravity="center" />
+
+    <TextView
+        android:id="@+id/tvForecastTemp"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:text="15° / 22°"
+        android:textColor="#cbb7fb"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:gravity="end" />
+
+</LinearLayout>

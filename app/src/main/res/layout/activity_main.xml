@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1b1938"
+    tools:context=".MainActivity">
+
+    <!-- Hero Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- App Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Neko GPS"
+            android:textColor="#ffffff"
+            android:textSize="48sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-condensed"
+            android:letterSpacing="0.05"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Tagline -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Your private navigation companion, nya~"
+            android:textColor="#cbb7fb"
+            android:textSize="16sp"
+            android:fontFamily="sans-serif"
+            android:layout_marginBottom="48dp" />
+
+        <!-- GPS Status Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:cardBackgroundColor="#292827"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#dcd7d3"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="GPS Status"
+                    android:textColor="#cbb7fb"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/tvGpsStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Waiting for signal..."
+                    android:textColor="#e9e5dd"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvCoordinates"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--, --"
+                    android:textColor="#714cb6"
+                    android:textSize="14sp"
+                    android:layout_marginTop="4dp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Navigation Buttons -->
+        <Button
+            android:id="@+id/btnOpenMap"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="12dp"
+            android:backgroundTint="#cbb7fb"
+            android:text="Open Map"
+            android:textColor="#1b1938"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:drawableStart="@drawable/ic_map"
+            android:drawablePadding="12dp"
+            android:gravity="center"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp" />
+
+        <Button
+            android:id="@+id/btnStartNavigation"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="12dp"
+            android:backgroundTint="#e9e5dd"
+            android:text="Start Navigation"
+            android:textColor="#292827"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:drawableStart="@drawable/ic_navigation"
+            android:drawablePadding="12dp"
+            android:gravity="center"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <Button
+                android:id="@+id/btnTracks"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:backgroundTint="#292827"
+                android:text="Tracks"
+                android:textColor="#e9e5dd"
+                android:textSize="14sp"
+                android:drawableStart="@drawable/ic_track"
+                android:drawablePadding="8dp" />
+
+            <Button
+                android:id="@+id/btnPoiSearch"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="6dp"
+                android:backgroundTint="#292827"
+                android:text="POI Search"
+                android:textColor="#e9e5dd"
+                android:textSize="14sp"
+                android:drawableStart="@drawable/ic_search"
+                android:drawablePadding="8dp" />
+
+            <Button
+                android:id="@+id/btnSettings"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:backgroundTint="#292827"
+                android:text="Settings"
+                android:textColor="#e9e5dd"
+                android:textSize="14sp"
+                android:drawableStart="@drawable/ic_settings"
+                android:drawablePadding="8dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

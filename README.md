@@ -73,3 +73,27 @@ MIT License — your private GPS app, nya~ 🐱
 
 ---
 Made with ❤️ by Neko-chan using Hermes Agent
+
+## Phase 4-6: Data, Route Intelligence & Gamification (v1.2.0)
+
+### Data & Statistics
+- **Fuel Price Comparison** — Compare fuel prices across nearby stations in real-time
+- **Odometer** — Track total distance traveled with precision
+- **Statistics Dashboard** — Comprehensive trip analytics with charts
+- **Route Replay** — Animate past routes on the map with a playback slider
+
+### Route Intelligence
+- **Route Options** — Choose routes avoiding tolls, highways, or ferries
+- **Alternative Routes** — Get smart route suggestions from multiple sources
+- **Round Trip Generator** — Plan return trips automatically with optimized paths
+
+### Gamification
+- **Achievements** — Earn milestone-based challenges (first 1km, 100km, etc.)
+- **Leaderboard** — Compete with friends on distance, accuracy, and challenges
+- **Location Challenges** — Explore new areas to unlock badges
+- **Photo Waypoints** — Attach geotagged photos to any location
+
+### Build
+- 69+ Kotlin files, 39+ layouts
+- Build: `gradle assembleRelease` successful
+- APK: `NekoGPS-v1.2.0-release.apk` (3.4MB)

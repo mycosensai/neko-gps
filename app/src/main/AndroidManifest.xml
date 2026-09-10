@@ -16,6 +16,12 @@
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+    <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
 
     <uses-feature
         android:name="android.hardware.location.gps"
@@ -152,6 +158,25 @@
             android:name=".features.stats.RouteReplayActivity"
             android:exported="false"
             android:theme="@style/Theme.NekoGps" />
+
+        <!-- Phase 7: Safety & Emergency -->
+        <activity
+            android:name=".features.safety.SafetyActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NekoGps" />
+
+        <!-- Phase 8: Customization & UI -->
+        <activity
+            android:name=".features.ui.CarModeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NekoGps" />
+
+        <!-- Phase 10: Performance & Polish -->
+        <activity
+            android:name=".features.performance.PerformanceActivity"
+            android:exported="false"
+            android:theme="@style/Theme.NekoGps"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize" />
 
         <service
             android:name=".service.LocationTrackingService"

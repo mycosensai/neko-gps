@@ -166,6 +166,29 @@
                 android:drawablePadding="8dp" />
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <Button
+                android:id="@+id/btnSafety"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:backgroundTint="#e94560"
+                android:text="Safety &amp; Emergency"
+                android:textColor="#ffffff"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:drawableStart="@drawable/ic_emergency"
+                android:drawablePadding="8dp"
+                android:gravity="center"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp" />
+
+        </LinearLayout>
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -23,4 +23,11 @@
     <color name="warning">#FF9800</color>
     <color name="error">#F44336</color>
     <color name="info">#2196F3</color>
+    <color name="success_green">#4CAF50</color>
+    <color name="error_red">#F44336</color>
+    <color name="pure_black">#000000</color>
+    <color name="solarized_base3">#fdf6e3</color>
+    <color name="solarized_base2">#eee8d5</color>
+    <color name="solarized_base01">#586e75</color>
+    <color name="solarized_blue">#268bd2</color>
 </resources>

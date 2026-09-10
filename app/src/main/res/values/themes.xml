@@ -26,6 +26,42 @@
         <item name="colorOnSurface">@color/warm_cream</item>
     </style>
 
+    <style name="Theme.NekoGps.Light" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/amethyst_link</item>
+        <item name="colorOnPrimary">@color/pure_white</item>
+        <item name="colorSecondary">@color/amethyst_link</item>
+        <item name="android:colorBackground">@color/pure_white</item>
+        <item name="colorSurface">@color/pure_white</item>
+        <item name="colorOnSurface">@color/charcoal_ink</item>
+    </style>
+
+    <style name="Theme.NekoGps.HighContrast" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/pure_white</item>
+        <item name="colorOnPrimary">@color/pure_black</item>
+        <item name="colorSecondary">@color/pure_white</item>
+        <item name="android:colorBackground">@color/pure_black</item>
+        <item name="colorSurface">@color/pure_black</item>
+        <item name="colorOnSurface">@color/pure_white</item>
+    </style>
+
+    <style name="Theme.NekoGps.Amoled" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/lavender_glow</item>
+        <item name="colorOnPrimary">@color/pure_black</item>
+        <item name="android:colorBackground">@color/pure_black</item>
+        <item name="colorSurface">@color/pure_black</item>
+        <item name="colorOnSurface">@color/warm_cream</item>
+        <item name="android:statusBarColor">@color/pure_black</item>
+        <item name="android:navigationBarColor">@color/pure_black</item>
+    </style>
+
+    <style name="Theme.NekoGps.Solarized" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/solarized_blue</item>
+        <item name="colorOnPrimary">@color/solarized_base3</item>
+        <item name="android:colorBackground">@color/solarized_base3</item>
+        <item name="colorSurface">@color/solarized_base2</item>
+        <item name="colorOnSurface">@color/solarized_base01</item>
+    </style>
+
     <style name="NekoButton" parent="Widget.Material3.Button">
         <item name="android:textColor">@color/mysteria_purple</item>
         <item name="backgroundTint">@color/lavender_glow</item>

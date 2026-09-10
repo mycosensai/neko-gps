@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_test_sos"
+        android:icon="@drawable/ic_emergency"
+        android:title="@string/test_sos"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_export_emergency"
+        android:icon="@drawable/ic_download"
+        android:title="@string/export_emergency_data"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_import_emergency"
+        android:icon="@drawable/ic_upload"
+        android:title="@string/import_emergency_data"
+        app:showAsAction="never" />
+
+</menu>

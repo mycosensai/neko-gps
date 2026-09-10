@@ -16,6 +16,8 @@ class NekoGpsApp : Application() {
     companion object {
         const val CHANNEL_ID = "neko_gps_channel"
         const val CHANNEL_NAME = "GPS Tracking"
+        private const val DEFAULT_LATITUDE = 40.7128
+        private const val DEFAULT_LONGITUDE = -74.0060
     }
 
     private var fusedClient: FusedLocationProviderClient? = null
@@ -35,10 +37,16 @@ class NekoGpsApp : Application() {
             fusedClient?.lastLocation?.addOnSuccessListener { location ->
                 lastKnownLocation = location
             }?.addOnFailureListener {
-                lastKnownLocation = Location("").apply { latitude = 40.7128; longitude = -74.0060 }
+                lastKnownLocation = Location("").apply {
+                    latitude = DEFAULT_LATITUDE
+                    longitude = DEFAULT_LONGITUDE
+                }
             }
         } else {
-            lastKnownLocation = Location("").apply { latitude = 40.7128; longitude = -74.0060 }
+            lastKnownLocation = Location("").apply {
+                latitude = DEFAULT_LATITUDE
+                longitude = DEFAULT_LONGITUDE
+            }
         }
     }
 

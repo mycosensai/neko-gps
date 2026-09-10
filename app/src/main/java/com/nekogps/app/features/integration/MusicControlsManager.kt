@@ -23,7 +23,10 @@ class MusicControlsManager(private val context: Context) {
     private fun sessionManager(): MediaSessionManager? {
         return try {
             context.getSystemService(Context.MEDIA_SESSION_SERVICE) as? MediaSessionManager
-        } catch (e: Exception) {
+        } catch (e: SecurityException) {
+            Log.w("MusicControlsManager", "sessionManager: suppressed Exception", e)
+            null
+        } catch (e: IllegalStateException) {
             Log.w("MusicControlsManager", "sessionManager: suppressed Exception", e)
             null
         }
@@ -31,27 +34,25 @@ class MusicControlsManager(private val context: Context) {
 
     /** Packages with an active media session (requires notification-listener). */
     fun getActivePlayers(): List<PlayerState> {
-        return try {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return emptyList()
-            val mgr = sessionManager() ?: return emptyList()
+        return runCatching { queryActivePlayers() }
+            .onFailure { Log.w("MusicControlsManager", "getActivePlayers: failed", it) }
+            .getOrDefault(emptyList())
+    }
+
+    private fun queryActivePlayers(): List<PlayerState> {
+        val mgr = (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) sessionManager() else null)
+            ?: return emptyList()
             val component = android.content.ComponentName(context, MusicControlsManager::class.java)
-            mgr.getActiveSessions(component).map { c: MediaController ->
+            return mgr.getActiveSessions(component).map { c: MediaController ->
                 val playing = try {
                     c.playbackState?.state ==
                         android.media.session.PlaybackState.STATE_PLAYING
-                } catch (e: Exception) {
+                } catch (e: IllegalStateException) {
                     Log.w("MusicControlsManager", "getActivePlayers: suppressed Exception", e)
                     false
                 }
                 PlayerState(c.packageName.orEmpty(), playing)
             }
-        } catch (se: SecurityException) {
-            Log.w("MusicControlsManager", "getActivePlayers: suppressed SecurityException", se)
-            emptyList()
-        } catch (e: Exception) {
-            Log.w("MusicControlsManager", "getActivePlayers: suppressed Exception", e)
-            emptyList()
-        }
     }
 
     fun dispatchPlayPause(): Boolean = dispatchKey(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
@@ -71,7 +72,10 @@ class MusicControlsManager(private val context: Context) {
             }
             context.sendBroadcast(intentUp)
             true
-        } catch (e: Exception) {
+        } catch (e: SecurityException) {
+            Log.w("MusicControlsManager", "dispatchKey: suppressed Exception", e)
+            false
+        } catch (e: IllegalArgumentException) {
             Log.w("MusicControlsManager", "dispatchKey: suppressed Exception", e)
             false
         }

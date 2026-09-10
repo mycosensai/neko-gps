@@ -14,6 +14,14 @@ object DistanceCalculator {
     private const val EARTH_RADIUS_METERS = 6_371_000.0
     private const val METERS_PER_KM = 1000.0
     private const val METERS_PER_MILE = 1609.344
+    private const val DEGREES_FULL_CIRCLE = 360
+    private const val MINUTES_PER_HOUR = 60.0
+    private const val MINUTES_PER_HOUR_INT = 60
+    private const val FEET_PER_METER = 3.28084
+    private const val SHORT_DISTANCE_MILES_THRESHOLD = 0.1
+    private const val SHORT_DISTANCE_METERS_THRESHOLD = 1000
+    private const val MIN_DISPLAY_MINUTES = 1.0
+    private const val KMH_TO_MS_DIVISOR = 3.6
 
     /**
      * Calculate the great-circle distance between two coordinates using the Haversine formula.
@@ -58,7 +66,7 @@ object DistanceCalculator {
 
         val bearingRad = atan2(y, x)
         val bearingDeg = Math.toDegrees(bearingRad)
-        return (bearingDeg + 360) % 360
+        return (bearingDeg + DEGREES_FULL_CIRCLE) % DEGREES_FULL_CIRCLE
     }
 
     /**
@@ -70,7 +78,7 @@ object DistanceCalculator {
     fun estimateETA(distanceMeters: Double, avgSpeedKmh: Double): Double {
         if (avgSpeedKmh <= 0) return Double.MAX_VALUE
         val distanceKm = distanceMeters / METERS_PER_KM
-        return (distanceKm / avgSpeedKmh) * 60.0
+        return (distanceKm / avgSpeedKmh) * MINUTES_PER_HOUR
     }
 
     /**
@@ -82,13 +90,13 @@ object DistanceCalculator {
     fun formatDistance(meters: Double, useImperial: Boolean = false): String {
         return if (useImperial) {
             val miles = meters / METERS_PER_MILE
-            if (miles < 0.1) {
-                String.format(Locale.US, "%.0f ft", meters * 3.28084)
+            if (miles < SHORT_DISTANCE_MILES_THRESHOLD) {
+                String.format(Locale.US, "%.0f ft", meters * FEET_PER_METER)
             } else {
                 String.format(Locale.US, "%.2f mi", miles)
             }
         } else {
-            if (meters < 1000) {
+            if (meters < SHORT_DISTANCE_METERS_THRESHOLD) {
                 String.format(Locale.US, "%.0f m", meters)
             } else {
                 String.format(Locale.US, "%.2f km", meters / METERS_PER_KM)
@@ -103,11 +111,11 @@ object DistanceCalculator {
      */
     fun formatETA(minutes: Double): String {
         return when {
-            minutes < 1.0 -> "< 1 min"
-            minutes < 60.0 -> String.format(Locale.US, "%.0f min", minutes)
+            minutes < MIN_DISPLAY_MINUTES -> "< 1 min"
+            minutes < MINUTES_PER_HOUR -> String.format(Locale.US, "%.0f min", minutes)
             else -> {
-                val hours = (minutes / 60).toInt()
-                val mins = (minutes % 60).toInt()
+                val hours = (minutes / MINUTES_PER_HOUR_INT).toInt()
+                val mins = (minutes % MINUTES_PER_HOUR_INT).toInt()
                 String.format(Locale.US, "%dh %dm", hours, mins)
             }
         }
@@ -132,7 +140,7 @@ object DistanceCalculator {
     /**
      * Convert meters to feet.
      */
-    fun metersToFeet(meters: Double): Double = meters * 3.28084
+    fun metersToFeet(meters: Double): Double = meters * FEET_PER_METER
 
     /**
      * Convert meters to miles.
@@ -142,5 +150,5 @@ object DistanceCalculator {
     /**
      * Convert km/h to m/s.
      */
-    fun kmhToMs(kmh: Double): Double = kmh / 3.6
+    fun kmhToMs(kmh: Double): Double = kmh / KMH_TO_MS_DIVISOR
 }

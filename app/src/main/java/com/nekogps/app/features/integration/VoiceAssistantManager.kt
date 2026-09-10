@@ -42,21 +42,66 @@ class VoiceAssistantManager {
 
     fun parseCommand(text: String): VoiceCommand {
         val t = text.lowercase(Locale.US).trim()
-        return when {
-            t.contains("navigate home") || t == "go home" -> VoiceCommand(VoiceAction.NAVIGATE_HOME)
-            t.startsWith("navigate to ") || t.startsWith("go to ") || t.startsWith("drive to ") ->
-                VoiceCommand(VoiceAction.NAVIGATE_TO, text.substringAfter("to ").trim())
-            t.contains("gas") || t.contains("fuel") || t.contains("petrol") ->
-                VoiceCommand(VoiceAction.FIND_GAS)
-            t.contains("food") || t.contains("restaurant") || t.contains("eat") ->
-                VoiceCommand(VoiceAction.FIND_FOOD)
-            t.contains("speed camera") || t.contains("speed trap") ->
-                VoiceCommand(VoiceAction.REPORT_SPEED_CAMERA)
-            t.contains("share") && t.contains("location") ->
-                VoiceCommand(VoiceAction.SHARE_LOCATION)
-            t.contains("stop navigation") || t.contains("cancel navigation") || t.contains("stop navigating") ->
-                VoiceCommand(VoiceAction.STOP_NAVIGATION)
-            else -> VoiceCommand(VoiceAction.UNKNOWN, text)
+        return matchHome(t)
+            ?: matchDestination(t, text)
+            ?: matchFuel(t)
+            ?: matchFood(t)
+            ?: matchCamera(t)
+            ?: matchShare(t)
+            ?: matchStop(t)
+            ?: VoiceCommand(VoiceAction.UNKNOWN, text)
+    }
+
+    private fun matchHome(t: String): VoiceCommand? =
+        if (t.contains("navigate home") || t == "go home") {
+            VoiceCommand(VoiceAction.NAVIGATE_HOME)
+        } else {
+            null
+        }
+
+    private fun matchDestination(t: String, raw: String): VoiceCommand? =
+        if (t.startsWith("navigate to ") || t.startsWith("go to ") || t.startsWith("drive to ")) {
+            VoiceCommand(VoiceAction.NAVIGATE_TO, raw.substringAfter("to ").trim())
+        } else {
+            null
+        }
+
+    private fun matchFuel(t: String): VoiceCommand? =
+        if (t.contains("gas") || t.contains("fuel") || t.contains("petrol")) {
+            VoiceCommand(VoiceAction.FIND_GAS)
+        } else {
+            null
+        }
+
+    private fun matchFood(t: String): VoiceCommand? =
+        if (t.contains("food") || t.contains("restaurant") || t.contains("eat")) {
+            VoiceCommand(VoiceAction.FIND_FOOD)
+        } else {
+            null
+        }
+
+    private fun matchCamera(t: String): VoiceCommand? =
+        if (t.contains("speed camera") || t.contains("speed trap")) {
+            VoiceCommand(VoiceAction.REPORT_SPEED_CAMERA)
+        } else {
+            null
+        }
+
+    private fun matchShare(t: String): VoiceCommand? =
+        if (t.contains("share") && t.contains("location")) {
+            VoiceCommand(VoiceAction.SHARE_LOCATION)
+        } else {
+            null
+        }
+
+    private fun matchStop(t: String): VoiceCommand? {
+        val stop = t.contains("stop navigation") ||
+            t.contains("cancel navigation") ||
+            t.contains("stop navigating")
+        return if (stop) {
+            VoiceCommand(VoiceAction.STOP_NAVIGATION)
+        } else {
+            null
         }
     }
 

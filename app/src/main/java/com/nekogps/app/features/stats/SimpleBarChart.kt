@@ -18,18 +18,32 @@ class SimpleBarChart @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
+    companion object {
+        private const val VALUE_TEXT_SIZE = 36f
+        private const val LABEL_TEXT_SIZE = 28f
+        private const val PADDING_SIDE = 16f
+        private const val PADDING_TOP = 24f
+        private const val PADDING_BOTTOM = 48f
+        private const val BAR_WIDTH_RATIO = 0.7f
+        private const val GAP_RATIO = 0.3f
+        private const val MAX_BAR_HEIGHT_RATIO = 0.8f
+        private const val METERS_PER_KILOMETER = 1000
+        private const val VALUE_LABEL_OFFSET_Y = 8
+        private const val AXIS_LABEL_OFFSET_Y = 20
+    }
+
     private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#cbb7fb") // Lavender Glow
         style = Paint.Style.FILL
     }
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#e9e5dd") // Warm Cream
-        textSize = 36f
+        textSize = VALUE_TEXT_SIZE
         textAlign = Paint.Align.CENTER
     }
     private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#dcd7d3") // Parchment
-        textSize = 28f
+        textSize = LABEL_TEXT_SIZE
         textAlign = Paint.Align.CENTER
     }
 
@@ -50,17 +64,17 @@ class SimpleBarChart @JvmOverloads constructor(
 
         val width = width.toFloat()
         val height = height.toFloat()
-        val paddingLeft = 16f
-        val paddingRight = 16f
-        val paddingTop = 24f
-        val paddingBottom = 48f
+        val paddingLeft = PADDING_SIDE
+        val paddingRight = PADDING_SIDE
+        val paddingTop = PADDING_TOP
+        val paddingBottom = PADDING_BOTTOM
         val chartWidth = width - paddingLeft - paddingRight
         val chartHeight = height - paddingTop - paddingBottom
         val barCount = values.size
-        val barWidth = (chartWidth / barCount) * 0.7f
-        val gap = (chartWidth / barCount) * 0.3f
+        val barWidth = (chartWidth / barCount) * BAR_WIDTH_RATIO
+        val gap = (chartWidth / barCount) * GAP_RATIO
 
-        val maxBarHeight = chartHeight * 0.8f
+        val maxBarHeight = chartHeight * MAX_BAR_HEIGHT_RATIO
 
         for (i in values.indices) {
             val value = values[i]
@@ -78,13 +92,17 @@ class SimpleBarChart @JvmOverloads constructor(
 
             // Value label on top
             textPaint.color = Color.parseColor("#cbb7fb")
-            val valueText = if (value >= 1000) "%.1fkm".format(value / 1000) else "%.0fm".format(value)
-            canvas.drawText(valueText, x + barWidth / 2, y - 8, textPaint)
+            val valueText = if (value >= METERS_PER_KILOMETER) {
+                "%.1fkm".format(value / METERS_PER_KILOMETER)
+            } else {
+                "%.0fm".format(value)
+            }
+            canvas.drawText(valueText, x + barWidth / 2, y - VALUE_LABEL_OFFSET_Y, textPaint)
 
             // X-axis label
             labelPaint.color = Color.parseColor("#dcd7d3")
             if (i < labels.size) {
-                canvas.drawText(labels[i], x + barWidth / 2, height - paddingBottom + 20, labelPaint)
+                canvas.drawText(labels[i], x + barWidth / 2, height - paddingBottom + AXIS_LABEL_OFFSET_Y, labelPaint)
             }
         }
     }

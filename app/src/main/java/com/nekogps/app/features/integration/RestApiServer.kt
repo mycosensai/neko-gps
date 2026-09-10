@@ -1,5 +1,6 @@
 package com.nekogps.app.features.integration
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.location.Location
@@ -61,31 +62,39 @@ class RestApiServer(private val context: Context) {
     /** Route a parsed request; pure logic, safe to unit test. */
     fun handleRequest(path: String, token: String?, params: Map<String, String>): ApiResult {
         if (!isAuthorized(token)) return ApiResult(false, "unauthorized")
+        return dispatchAuthorizedRequest(path, params)
+    }
+
+    private fun dispatchAuthorizedRequest(path: String, params: Map<String, String>): ApiResult {
         return when (path.trimEnd('/')) {
-            "/api/navigate" -> {
-                val dest = params["destination"].orEmpty()
-                if (dest.isBlank()) return ApiResult(false, "missing destination")
-                val ok = openNavigation(dest)
-                ApiResult(ok, if (ok) "navigating to $dest" else "failed to navigate")
-            }
-            "/api/waypoint" -> {
-                val lat = params["lat"]?.toDoubleOrNull()
-                val lon = params["lon"]?.toDoubleOrNull()
-                if (lat == null || lon == null) return ApiResult(false, "missing lat/lon")
-                context.sendBroadcast(
-                    Intent(ACTION_ADD_WAYPOINT).apply {
-                        putExtra(EXTRA_LAT, lat)
-                        putExtra(EXTRA_LON, lon)
-                        putExtra(EXTRA_NAME, params["name"].orEmpty())
-                    }
-                )
-                ApiResult(true, "waypoint queued")
-            }
+            "/api/navigate" -> handleNavigateRequest(params)
+            "/api/waypoint" -> handleWaypointRequest(params)
             "/api/location" -> {
                 ApiResult(true, "ok", mapOf("note" to "location served via fused client"))
             }
             else -> ApiResult(false, "unknown endpoint: $path")
         }
+    }
+
+    private fun handleNavigateRequest(params: Map<String, String>): ApiResult {
+        val dest = params["destination"].orEmpty()
+        if (dest.isBlank()) return ApiResult(false, "missing destination")
+        val ok = openNavigation(dest)
+        return ApiResult(ok, if (ok) "navigating to $dest" else "failed to navigate")
+    }
+
+    private fun handleWaypointRequest(params: Map<String, String>): ApiResult {
+        val lat = params["lat"]?.toDoubleOrNull()
+        val lon = params["lon"]?.toDoubleOrNull()
+        if (lat == null || lon == null) return ApiResult(false, "missing lat/lon")
+        context.sendBroadcast(
+            Intent(ACTION_ADD_WAYPOINT).apply {
+                putExtra(EXTRA_LAT, lat)
+                putExtra(EXTRA_LON, lon)
+                putExtra(EXTRA_NAME, params["name"].orEmpty())
+            }
+        )
+        return ApiResult(true, "waypoint queued")
     }
 
     private fun openNavigation(destination: String): Boolean {
@@ -97,7 +106,10 @@ class RestApiServer(private val context: Context) {
                 }
             )
             true
-        } catch (e: Exception) {
+        } catch (e: ActivityNotFoundException) {
+            Log.w("RestApiServer", "openNavigation: suppressed Exception", e)
+            false
+        } catch (e: SecurityException) {
             Log.w("RestApiServer", "openNavigation: suppressed Exception", e)
             false
         }
@@ -115,9 +127,6 @@ class RestApiServer(private val context: Context) {
             )
         )
     }
-
-    @Suppress("unused")
-    private fun encode(s: String): String = URLEncoder.encode(s, "UTF-8")
 
     @Suppress("unused")
     private fun decode(s: String): String = URLDecoder.decode(s, "UTF-8")

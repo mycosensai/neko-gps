@@ -15,7 +15,49 @@ import android.util.Log
  * Phase 10: Smart location updates with adaptive interval based on speed,
  * Doze mode handling, and battery usage stats.
  */
-class BatteryOptimizationManager(private val context: Context) {
+open class BatteryPowerStateReader(protected val appContext: Context) {
+
+    protected val powerManager: PowerManager? =
+        appContext.getSystemService(Context.POWER_SERVICE) as? PowerManager
+
+    fun isPowerSaveMode(): Boolean = powerManager?.isPowerSaveMode ?: false
+
+    /** True when the device is idle (Doze) and background work is deferred. */
+    fun isDozeMode(): Boolean {
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                powerManager?.isDeviceIdleMode ?: false
+            } else false
+        } catch (e: IllegalStateException) {
+            Log.w("BatteryOptimizationManager", "isDozeMode: suppressed Exception", e)
+            false }
+    }
+
+    protected fun isChargingNow(): Boolean {
+        return try {
+            val bm = appContext.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                bm?.isCharging ?: false
+            } else false
+        } catch (e: IllegalStateException) {
+            Log.w("BatteryOptimizationManager", "isChargingNow: suppressed Exception", e)
+            false }
+    }
+
+    fun shouldDeferBackgroundWork(): Boolean = isDozeMode() || (isPowerSaveMode() && !isChargingNow())
+    }
+
+/**
+ * Callbacks for battery-optimization state changes.
+ */
+interface BatteryOptimizationListener {
+    fun onIntervalChanged(intervalMs: Long) {}
+    fun onBatteryStats(stats: BatteryOptimizationManager.BatteryStats) {}
+    fun onPowerSaveModeChanged(enabled: Boolean) {}
+}
+
+class BatteryOptimizationManager(private val context: Context) :
+    BatteryPowerStateReader(context) {
 
     data class BatteryStats(
         val levelPercent: Int = -1,
@@ -26,18 +68,10 @@ class BatteryOptimizationManager(private val context: Context) {
         val estimatedHoursRemaining: Double = -1.0
     )
 
-    interface Listener {
-        fun onIntervalChanged(intervalMs: Long) {}
-        fun onBatteryStats(stats: BatteryStats) {}
-        fun onPowerSaveModeChanged(enabled: Boolean) {}
-    }
-
-    var listener: Listener? = null
+    var listener: BatteryOptimizationListener? = null
 
     private val prefs: SharedPreferences =
         context.getSharedPreferences("battery_opt_prefs", Context.MODE_PRIVATE)
-    private val powerManager: PowerManager? =
-        context.getSystemService(Context.POWER_SERVICE) as? PowerManager
 
     var currentIntervalMs: Long = DEFAULT_INTERVAL_MS
         private set
@@ -51,8 +85,15 @@ class BatteryOptimizationManager(private val context: Context) {
         override fun onReceive(c: Context?, intent: Intent?) {
             if (intent == null) return
             val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
-            val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100)
-            val pct = if (level >= 0 && scale > 0) (level * 100 / scale) else -1
+            val scale = intent.getIntExtra(
+                BatteryManager.EXTRA_SCALE,
+                DEFAULT_BATTERY_SCALE
+            )
+            val pct = if (level >= 0 && scale > 0) {
+                level * PERCENT_FACTOR / scale
+            } else {
+                UNKNOWN_BATTERY_PCT
+            }
             val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
             val charging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
                 status == BatteryManager.BATTERY_STATUS_FULL
@@ -80,16 +121,20 @@ class BatteryOptimizationManager(private val context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 context.registerReceiver(powerSaveReceiver, filter)
             }
-        } catch (e: Exception) { Log.w(TAG, "register failed: " + e.message) }
+        } catch (e: SecurityException) {
+            Log.w(TAG, "register failed", e)
+        } catch (e: IllegalArgumentException) {
+            Log.w(TAG, "register failed", e)
+        }
     }
 
     fun stopTracking() {
         if (!tracking) return
         tracking = false
-        try { context.unregisterReceiver(batteryReceiver) } catch (e: Exception) {
+        try { context.unregisterReceiver(batteryReceiver) } catch (e: IllegalArgumentException) {
             Log.w("BatteryOptimizationManager", "stopTracking: suppressed Exception", e)
             /* ignore */ }
-        try { context.unregisterReceiver(powerSaveReceiver) } catch (e: Exception) {
+        try { context.unregisterReceiver(powerSaveReceiver) } catch (e: IllegalArgumentException) {
             Log.w("BatteryOptimizationManager", "stopTracking: suppressed Exception", e)
             /* ignore */ }
     }
@@ -118,22 +163,7 @@ class BatteryOptimizationManager(private val context: Context) {
         return currentIntervalMs
     }
 
-    fun isPowerSaveMode(): Boolean = powerManager?.isPowerSaveMode ?: false
-
-    /** True when the device is idle (Doze) and background work is deferred. */
-    fun isDozeMode(): Boolean {
-        return try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                powerManager?.isDeviceIdleMode ?: false
-            } else false
-        } catch (e: Exception) {
-            Log.w("BatteryOptimizationManager", "isDozeMode: suppressed Exception", e)
-            false }
-    }
-
     /** Suggest whether background tracking should back off right now. */
-    fun shouldDeferBackgroundWork(): Boolean = isDozeMode() || (isPowerSaveMode() && !isChargingNow())
-
     fun getStats(levelPct: Int = lastLevel, charging: Boolean = isChargingNow()): BatteryStats {
         val lvl = if (levelPct >= 0) levelPct else readLevel()
         return BatteryStats(
@@ -148,9 +178,13 @@ class BatteryOptimizationManager(private val context: Context) {
 
     private fun estimateSpeed(location: Location): Float {
         val prev = lastLocation ?: return 0f
-        val dt = (location.time - prev.time) / 1000f
+        return speedBetween(prev, location)
+    }
+
+    private fun speedBetween(prev: Location, location: Location): Float {
+        val dt = (location.time - prev.time) / MILLIS_PER_SECOND_F
         if (dt <= 0f) return 0f
-        return try { prev.distanceTo(location) / dt } catch (e: Exception) {
+        return try { prev.distanceTo(location) / dt } catch (e: IllegalArgumentException) {
             Log.w("BatteryOptimizationManager", "estimateSpeed: suppressed Exception", e)
             0f }
     }
@@ -167,7 +201,10 @@ class BatteryOptimizationManager(private val context: Context) {
 
     private fun drainPerHour(dropPct: Int, elapsedMs: Long): Float {
         if (elapsedMs <= 0) return -1f
-        return (dropPct * 3_600_000f / elapsedMs).coerceIn(0f, 100f)
+        return (dropPct * MILLIS_PER_HOUR_F / elapsedMs).coerceIn(
+            MIN_DRAIN_PER_HOUR,
+            MAX_DRAIN_PER_HOUR
+        )
     }
 
     private fun estimateHoursRemaining(levelPct: Int): Double {
@@ -182,20 +219,11 @@ class BatteryOptimizationManager(private val context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 bm?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY) ?: lastLevel
             } else lastLevel
-        } catch (e: Exception) {
+        } catch (e: SecurityException) {
+            Log.w("BatteryOptimizationManager", "readLevel: suppressed Exception", e)
+            lastLevel } catch (e: IllegalStateException) {
             Log.w("BatteryOptimizationManager", "readLevel: suppressed Exception", e)
             lastLevel }
-    }
-
-    private fun isChargingNow(): Boolean {
-        return try {
-            val bm = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                bm?.isCharging ?: false
-            } else false
-        } catch (e: Exception) {
-            Log.w("BatteryOptimizationManager", "isChargingNow: suppressed Exception", e)
-            false }
     }
 
     companion object {
@@ -211,5 +239,12 @@ class BatteryOptimizationManager(private val context: Context) {
         private const val SPEED_STATIONARY_M_S = 0.5f
         private const val SPEED_WALK_M_S = 2.0f
         private const val SPEED_DRIVE_M_S = 15.0f
+        private const val DEFAULT_BATTERY_SCALE = 100
+        private const val PERCENT_FACTOR = 100
+        private const val UNKNOWN_BATTERY_PCT = -1
+        private const val MILLIS_PER_SECOND_F = 1000f
+        private const val MILLIS_PER_HOUR_F = 3_600_000f
+        private const val MIN_DRAIN_PER_HOUR = 0f
+        private const val MAX_DRAIN_PER_HOUR = 100f
     }
 }

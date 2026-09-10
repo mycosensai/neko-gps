@@ -6,7 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.nekogps.app.features.bookmarks.WaypointEntity
+import com.nekogps.app.features.waypoints.WaypointEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

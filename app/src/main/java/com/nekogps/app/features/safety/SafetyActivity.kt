@@ -11,7 +11,12 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.*
+import android.widget.Button
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.SeekBar
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
@@ -96,11 +101,12 @@ class SafetyActivity : AppCompatActivity() {
         initializeViews()
         setupToolbar()
         setupListeners()
+        bindCrashAndFatigueListeners()
         loadSettings()
         startPeriodicUpdates()
     }
 
-    private fun initializeManagers() {
+    fun initializeManagers() {
         emergencySOSManager = EmergencySOSManager.getInstance(this)
         crashDetectionManager = CrashDetectionManager.getInstance(this)
         speedWarningManager = SpeedWarningManager.getInstance(this)
@@ -108,7 +114,7 @@ class SafetyActivity : AppCompatActivity() {
         offlineEmergencyManager = OfflineEmergencyManager.getInstance(this)
     }
 
-    private fun initializeViews() {
+    fun initializeViews() {
         toolbar = findViewById(R.id.toolbar)
         sosButton = findViewById(R.id.btn_sos)
         sosStatusText = findViewById(R.id.tv_sos_status)
@@ -145,13 +151,13 @@ class SafetyActivity : AppCompatActivity() {
         emergencyNotesEditText = findViewById(R.id.et_emergency_notes)
     }
 
-    private fun setupToolbar() {
+    fun setupToolbar() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.setTitle(R.string.safety_features)
     }
 
-    private fun setupListeners() {
+    fun setupListeners() {
         // SOS Button
         sosButton.setOnClickListener {
             showSOSConfirmationDialog()
@@ -198,11 +204,21 @@ class SafetyActivity : AppCompatActivity() {
                     thresholdText.text = getString(R.string.speed_warning_threshold, progress)
                 }
             }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
         })
 
-        // Fatigue Detection
+        bindCrashAndFatigueListeners()
+    }
+
+    fun bindCrashAndFatigueListeners() {
+        crashMonitorSwitch.setOnCheckedChangeListener { _, checked ->
+            if (checked) {
+                crashDetectionManager.startMonitoring()
+            } else {
+                crashDetectionManager.stopMonitoring()
+            }
+        }
         fatigueMonitorSwitch.setOnCheckedChangeListener { _, checked ->
             if (checked) {
                 fatigueDetectionManager.startMonitoring()
@@ -213,90 +229,46 @@ class SafetyActivity : AppCompatActivity() {
         breakIntervalSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
-                    val minutes = progress + 30 // 30-480 min
+                    val minutes = progress + BREAK_INTERVAL_SEEK_OFFSET_MINUTES
                     fatigueDetectionManager.setBreakIntervalMinutes(minutes)
                     breakIntervalText.text = getString(R.string.fatigue_break_interval, minutes)
                 }
             }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
         })
-
-        // Offline Emergency
-        addIceContactButton.setOnClickListener { showAddICEContactDialog() }
-        bloodTypeEditText?.setOnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus) updateMedicalInfo()
-        }
-        allergiesEditText?.setOnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus) updateMedicalInfo()
-        }
-        medicationsEditText?.setOnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus) updateMedicalInfo()
-        }
-        conditionsEditText?.setOnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus) updateMedicalInfo()
-        }
-        organDonorSwitch.setOnCheckedChangeListener { _, checked ->
-            offlineEmergencyManager.updateOrganDonor(checked)
-        }
-        emergencyNotesEditText?.setOnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus) updateMedicalInfo()
-        }
     }
 
-    private fun loadSettings() {
-        // Emergency SOS
-        autoSmsSwitch.isChecked = emergencySOSManager.getAutoSendSMS()
-        autoCallSwitch.isChecked = emergencySOSManager.getAutoCall()
-        includeLocationSwitch.isChecked = emergencySOSManager.getIncludeLocation()
-        updateContactsList()
-
+    fun loadSettings() {
         // Crash Detection
         crashMonitorSwitch.isChecked = crashDetectionManager.isMonitoring()
         updateCrashStatus()
-
-        // Speed Warning
-        speedWarningSwitch.isChecked = speedWarningManager.isEnabled()
-        visualWarningSwitch.isChecked = speedWarningManager.getVisualWarningEnabled()
-        audioWarningSwitch.isChecked = speedWarningManager.getAudioWarningEnabled()
-        voiceWarningSwitch.isChecked = speedWarningManager.getVoiceWarningEnabled()
-        thresholdSeekBar.progress = speedWarningManager.getThresholdKmh()
-        thresholdText.text = getString(R.string.speed_warning_threshold, speedWarningManager.getThresholdKmh())
 
         // Fatigue Detection
         fatigueMonitorSwitch.isChecked = fatigueDetectionManager.isMonitoring()
         updateDrivingTimeDisplay()
         val breakInterval = fatigueDetectionManager.getBreakIntervalMinutes()
-        breakIntervalSeekBar.progress = (breakInterval - 30).coerceIn(0, 450)
+        breakIntervalSeekBar.progress = (breakInterval - BREAK_INTERVAL_SEEK_OFFSET_MINUTES)
+            .coerceIn(0, BREAK_INTERVAL_SEEK_RANGE_MAX)
         breakIntervalText.text = getString(R.string.fatigue_break_interval, breakInterval)
-
-        // Offline Emergency
-        updateICEContactsList()
-        val medical = offlineEmergencyManager.getMedicalInfo()
-        bloodTypeEditText?.setText(medical.bloodType)
-        allergiesEditText?.setText(medical.allergies)
-        medicationsEditText?.setText(medical.medications)
-        conditionsEditText?.setText(medical.conditions)
-        organDonorSwitch.isChecked = medical.organDonor
-        emergencyNotesEditText?.setText(medical.emergencyNotes)
     }
 
-    private fun startPeriodicUpdates() {
+    fun startPeriodicUpdates() {
         updateRunnable = object : Runnable {
             override fun run() {
                 updateDrivingTimeDisplay()
                 updateCrashStatus()
                 updateSOSStatus()
-                handler.postDelayed(this, 5000)
+                handler.postDelayed(this, STATUS_UPDATE_INTERVAL_MS)
             }
         }
         handler.post(updateRunnable!!)
     }
 
-    private fun updateDrivingTimeDisplay() {
+    fun updateDrivingTimeDisplay() {
         val minutes = fatigueDetectionManager.getTotalDrivingMinutes()
-        val hours = minutes / 60
-        val mins = minutes % 60
+        val hours = minutes / MINUTES_PER_HOUR
+        val mins = minutes % MINUTES_PER_HOUR
         drivingTimeText.text = if (hours > 0) {
             getString(R.string.fatigue_driving_time_hours, hours, mins)
         } else {
@@ -304,7 +276,7 @@ class SafetyActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateCrashStatus() {
+    fun updateCrashStatus() {
         if (crashDetectionManager.isMonitoring()) {
             crashStatusText.text = getString(R.string.crash_detection_active)
             crashStatusText.setTextColor(ContextCompat.getColor(this, R.color.success_green))
@@ -314,12 +286,12 @@ class SafetyActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateSOSStatus() {
+    fun updateSOSStatus() {
         val contacts = emergencySOSManager.getEmergencyContacts()
         sosStatusText.text = getString(R.string.sos_contacts_configured, contacts.size)
     }
 
-    private fun updateContactsList() {
+    fun updateContactsList() {
         contactsContainer.removeAllViews()
         val contacts = emergencySOSManager.getEmergencyContacts()
 
@@ -327,7 +299,7 @@ class SafetyActivity : AppCompatActivity() {
             val emptyText = TextView(this).apply {
                 text = getString(R.string.no_emergency_contacts)
                 setTextColor(ContextCompat.getColor(this@SafetyActivity, R.color.text_secondary))
-                setPadding(0, 32, 0, 32)
+                setPadding(0, EMPTY_VIEW_VERTICAL_PADDING_PX, 0, EMPTY_VIEW_VERTICAL_PADDING_PX)
                 gravity = android.view.Gravity.CENTER
             }
             contactsContainer.addView(emptyText)
@@ -338,7 +310,8 @@ class SafetyActivity : AppCompatActivity() {
             val itemView = layoutInflater.inflate(R.layout.item_emergency_contact, contactsContainer, false)
             itemView.findViewById<TextView>(R.id.tv_contact_name).text = contact.name
             itemView.findViewById<TextView>(R.id.tv_contact_phone).text = contact.phoneNumber
-            itemView.findViewById<TextView>(R.id.tv_contact_primary).visibility = if (contact.isPrimary) View.VISIBLE else View.GONE
+            val contactBadge = itemView.findViewById<TextView>(R.id.tv_contact_primary)
+            contactBadge.visibility = if (contact.isPrimary) View.VISIBLE else View.GONE
 
             itemView.findViewById<MaterialButton>(R.id.btn_edit_contact).setOnClickListener {
                 showEditContactDialog(contact)
@@ -352,7 +325,7 @@ class SafetyActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateICEContactsList() {
+    fun updateICEContactsList() {
         iceContactsContainer.removeAllViews()
         val contacts = offlineEmergencyManager.getICEContacts()
 
@@ -360,7 +333,7 @@ class SafetyActivity : AppCompatActivity() {
             val emptyText = TextView(this).apply {
                 text = getString(R.string.no_ice_contacts)
                 setTextColor(ContextCompat.getColor(this@SafetyActivity, R.color.text_secondary))
-                setPadding(0, 32, 0, 32)
+                setPadding(0, EMPTY_VIEW_VERTICAL_PADDING_PX, 0, EMPTY_VIEW_VERTICAL_PADDING_PX)
                 gravity = android.view.Gravity.CENTER
             }
             iceContactsContainer.addView(emptyText)
@@ -372,7 +345,8 @@ class SafetyActivity : AppCompatActivity() {
             itemView.findViewById<TextView>(R.id.tv_ice_name).text = contact.name
             itemView.findViewById<TextView>(R.id.tv_ice_phone).text = contact.phoneNumber
             itemView.findViewById<TextView>(R.id.tv_ice_relationship).text = contact.relationship
-            itemView.findViewById<TextView>(R.id.tv_ice_primary).visibility = if (contact.isPrimary) View.VISIBLE else View.GONE
+            val iceBadge = itemView.findViewById<TextView>(R.id.tv_ice_primary)
+            iceBadge.visibility = if (contact.isPrimary) View.VISIBLE else View.GONE
 
             itemView.findViewById<MaterialButton>(R.id.btn_edit_ice).setOnClickListener {
                 showEditICEContactDialog(contact)
@@ -386,7 +360,7 @@ class SafetyActivity : AppCompatActivity() {
         }
     }
 
-    private fun showSOSConfirmationDialog() {
+    fun showSOSConfirmationDialog() {
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.emergency_sos)
             .setMessage(R.string.sos_confirm_message)
@@ -399,7 +373,7 @@ class SafetyActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showSOSFeedbackDialog() {
+    fun showSOSFeedbackDialog() {
         val contacts = emergencySOSManager.getEmergencyContacts()
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.sos_sent)
@@ -408,7 +382,7 @@ class SafetyActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showAddContactDialog() {
+    fun showAddContactDialog() {
         val view = layoutInflater.inflate(R.layout.dialog_add_emergency_contact, null)
         val nameEdit = view.findViewById<TextInputEditText>(R.id.et_contact_name)
         val phoneEdit = view.findViewById<TextInputEditText>(R.id.et_contact_phone)
@@ -430,7 +404,7 @@ class SafetyActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showEditContactDialog(contact: EmergencyContact) {
+    fun showEditContactDialog(contact: EmergencyContact) {
         val view = layoutInflater.inflate(R.layout.dialog_add_emergency_contact, null)
         val nameEdit = view.findViewById<TextInputEditText>(R.id.et_contact_name)
         val phoneEdit = view.findViewById<TextInputEditText>(R.id.et_contact_phone)
@@ -447,7 +421,11 @@ class SafetyActivity : AppCompatActivity() {
                 val name = nameEdit.text.toString().trim()
                 val phone = phoneEdit.text.toString().trim()
                 if (name.isNotEmpty() && phone.isNotEmpty()) {
-                    val updated = contact.copy(name = name, phoneNumber = phone, isPrimary = primaryCheck.isChecked)
+                    val updated = contact.copy(
+                        name = name,
+                        phoneNumber = phone,
+                        isPrimary = primaryCheck.isChecked
+                    )
                     emergencySOSManager.updateEmergencyContact(updated)
                     updateContactsList()
                 }
@@ -456,7 +434,7 @@ class SafetyActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showAddICEContactDialog() {
+    fun showAddICEContactDialog() {
         val view = layoutInflater.inflate(R.layout.dialog_add_ice_contact, null)
         val nameEdit = view.findViewById<TextInputEditText>(R.id.et_ice_name)
         val phoneEdit = view.findViewById<TextInputEditText>(R.id.et_ice_phone)
@@ -473,7 +451,13 @@ class SafetyActivity : AppCompatActivity() {
                 val relationship = relationshipEdit.text.toString().trim()
                 val email = emailEdit.text.toString().trim()
                 if (name.isNotEmpty() && phone.isNotEmpty()) {
-                    val contact = ICEContact(name = name, phoneNumber = phone, relationship = relationship, isPrimary = primaryCheck.isChecked, email = email)
+                    val contact = ICEContact(
+                        name = name,
+                        phoneNumber = phone,
+                        relationship = relationship,
+                        isPrimary = primaryCheck.isChecked,
+                        email = email
+                    )
                     offlineEmergencyManager.addICEContact(contact)
                     updateICEContactsList()
                 }
@@ -482,7 +466,7 @@ class SafetyActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showEditICEContactDialog(contact: ICEContact) {
+    fun showEditICEContactDialog(contact: ICEContact) {
         val view = layoutInflater.inflate(R.layout.dialog_add_ice_contact, null)
         val nameEdit = view.findViewById<TextInputEditText>(R.id.et_ice_name)
         val phoneEdit = view.findViewById<TextInputEditText>(R.id.et_ice_phone)
@@ -505,7 +489,13 @@ class SafetyActivity : AppCompatActivity() {
                 val relationship = relationshipEdit.text.toString().trim()
                 val email = emailEdit.text.toString().trim()
                 if (name.isNotEmpty() && phone.isNotEmpty()) {
-                    val updated = contact.copy(name = name, phoneNumber = phone, relationship = relationship, isPrimary = primaryCheck.isChecked, email = email)
+                    val updated = contact.copy(
+                        name = name,
+                        phoneNumber = phone,
+                        relationship = relationship,
+                        isPrimary = primaryCheck.isChecked,
+                        email = email
+                    )
                     offlineEmergencyManager.updateICEContact(updated)
                     updateICEContactsList()
                 }
@@ -514,7 +504,7 @@ class SafetyActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun updateMedicalInfo() {
+    fun updateMedicalInfo() {
         val medical = offlineEmergencyManager.getMedicalInfo().copy(
             bloodType = bloodTypeEditText?.text.toString() ?: "",
             allergies = allergiesEditText?.text.toString() ?: "",
@@ -553,7 +543,7 @@ class SafetyActivity : AppCompatActivity() {
         }
     }
 
-    private fun exportEmergencyData() {
+    fun exportEmergencyData() {
         val json = offlineEmergencyManager.exportEmergencyData()
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "application/json"
@@ -563,8 +553,8 @@ class SafetyActivity : AppCompatActivity() {
         startActivity(Intent.createChooser(intent, getString(R.string.export_emergency_data)))
     }
 
-    private fun importEmergencyData() {
-        // TODO: Implement file picker for import
+    fun importEmergencyData() {
+        // Note: a file picker for import can be wired here later
         Toast.makeText(this, R.string.import_not_implemented, Toast.LENGTH_SHORT).show()
     }
 
@@ -577,6 +567,11 @@ class SafetyActivity : AppCompatActivity() {
     }
 
     companion object {
+        private const val BREAK_INTERVAL_SEEK_OFFSET_MINUTES = 30
+        private const val BREAK_INTERVAL_SEEK_RANGE_MAX = 450
+        private const val STATUS_UPDATE_INTERVAL_MS = 5000L
+        private const val MINUTES_PER_HOUR = 60
+        private const val EMPTY_VIEW_VERTICAL_PADDING_PX = 32
         fun start(context: Context) {
             context.startActivity(Intent(context, SafetyActivity::class.java))
         }

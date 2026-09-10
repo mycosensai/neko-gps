@@ -15,6 +15,12 @@ class FuelStationAdapter(
     private val onStationClick: (FuelStation) -> Unit = {}
 ) : ListAdapter<FuelStation, FuelStationAdapter.ViewHolder>(FuelStationDiffCallback()) {
 
+    companion object {
+        private const val LITERS_PER_GALLON = 3.78541
+        private const val CHEAP_PRICE_THRESHOLD = 1.40
+        private const val MODERATE_PRICE_THRESHOLD = 1.60
+    }
+
     private var useMetric: Boolean = true
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -51,12 +57,12 @@ class FuelStationAdapter(
             val priceText = if (useMetric) {
                 "$%.2f/L".format(price)
             } else {
-                "$%.2f/gal".format(price * 3.78541)
+                "$%.2f/gal".format(price * LITERS_PER_GALLON)
             }
             tvStationPrice.text = priceText
             tvStationPrice.setTextColor(
-                if (price < 1.40) android.graphics.Color.parseColor("#4CAF50")
-                else if (price < 1.60) android.graphics.Color.parseColor("#FF9800")
+                if (price < CHEAP_PRICE_THRESHOLD) android.graphics.Color.parseColor("#4CAF50")
+                else if (price < MODERATE_PRICE_THRESHOLD) android.graphics.Color.parseColor("#FF9800")
                 else android.graphics.Color.parseColor("#F44336")
             )
 

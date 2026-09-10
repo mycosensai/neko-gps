@@ -1,0 +1,11 @@
+EmptyFunctionBlock - [onNothingSelected] at C:\Users\vdako\neko-gps\native-android\app\src\main\java\com\nekogps\app\SettingsActivity.kt:78:69 - Signature=SettingsActivity.kt$SettingsActivity.<no name provided>${}
+EmptyFunctionBlock - [onNothingSelected] at C:\Users\vdako\neko-gps\native-android\app\src\main\java\com\nekogps\app\SettingsActivity.kt:100:69 - Signature=SettingsActivity.kt$SettingsActivity.<no name provided>${}
+TooGenericExceptionCaught - [e] at C:\Users\vdako\neko-gps\native-android\app\src\main\java\com\nekogps\app\features\SpeedLimitManager.kt:52:18 - Signature=SpeedLimitManager.kt$SpeedLimitManager$e: Exception
+TooGenericExceptionCaught - [e] at C:\Users\vdako\neko-gps\native-android\app\src\main\java\com\nekogps\app\features\SpeedLimitManager.kt:92:22 - Signature=SpeedLimitManager.kt$SpeedLimitManager$e: Exception
+TooGenericExceptionCaught - [e] at C:\Users\vdako\neko-gps\native-android\app\src\main\java\com\nekogps\app\features\SpeedLimitManager.kt:135:18 - Signature=SpeedLimitManager.kt$SpeedLimitManager$e: Exception
+TooGenericExceptionCaught - [e] at C:\Users\vdako\neko-gps\native-android\app\src\main\java\com\nekogps\app\features\SpeedLimitManager.kt:158:18 - Signature=SpeedLimitManager.kt$SpeedLimitManager$e: Exception
+TooGenericExceptionCaught - [e] at C:\Users\vdako\neko-gps\native-android\app\src\main\java\com\nekogps\app\features\SpeedLimitManager.kt:183:18 - Signature=SpeedLimitManager.kt$SpeedLimitManager$e: Exception
+TooGenericExceptionCaught - [e] at C:\Users\vdako\neko-gps\native-android\app\src\main\java\com\nekogps\app\features\WeatherOverlay.kt:124:22 - Signature=WeatherOverlay.kt$WeatherOverlay$e: Exception
+TooGenericExceptionCaught - [e] at C:\Users\vdako\neko-gps\native-android\app\src\main\java\com\nekogps\app\features\WeatherOverlay.kt:167:18 - Signature=WeatherOverlay.kt$WeatherOverlay$e: Exception
+TooGenericExceptionCaught - [e] at C:\Users\vdako\neko-gps\native-android\app\src\main\java\com\nekogps\app\PoiSearchActivity.kt:164:22 - Signature=PoiSearchActivity.kt$PoiSearchActivity$e: Exception
+TooGenericExceptionCaught - [e] at C:\Users\vdako\neko-gps\native-android\app\src\main\java\com\nekogps\app\TracksActivity.kt:136:18 - Signature=TracksActivity.kt$TracksActivity$e: Exception

@@ -10,13 +10,13 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Service for announcing turn-by-turn navigation instructions using Android's TextToSpeech.
  * Supports speaking directions, speed limits, and alerts.
  */
-class TextToSpeechService(context: Context) {
+class TextToSpeechService(context: Context) : TtsPlaybackController() {
 
-    private var tts: TextToSpeech? = null
-    private val isReady = AtomicBoolean(false)
-    private var speakVolume: Float = 1.0f
     private var speechRate: Float = 1.0f
-    private var isMuted = false
+
+    companion object {
+        private const val DISTANCE_ROUNDING_METERS = 100
+    }
 
     init {
         tts = TextToSpeech(context.applicationContext) { status ->
@@ -58,8 +58,8 @@ class TextToSpeechService(context: Context) {
     fun speakSpeedCameraAlert(distanceMeters: Int) {
         if (isMuted || !isReady.get()) return
         val distanceText = when {
-            distanceMeters < 100 -> "in $distanceMeters meters"
-            else -> "in ${distanceMeters / 100 * 100} meters"
+            distanceMeters < DISTANCE_ROUNDING_METERS -> "in $distanceMeters meters"
+            else -> "in ${distanceMeters / DISTANCE_ROUNDING_METERS * DISTANCE_ROUNDING_METERS} meters"
         }
         speak("Warning! Speed camera ahead $distanceText", "camera_alert_${System.currentTimeMillis()}")
     }
@@ -86,41 +86,6 @@ class TextToSpeechService(context: Context) {
     fun speakSpeed(speedKmh: Int) {
         if (isMuted || !isReady.get()) return
         speak("$speedKmh kilometers per hour", "speed_${System.currentTimeMillis()}")
-    }
-
-    /**
-     * Toggle mute state.
-     */
-    fun toggleMute(): Boolean {
-        isMuted = !isMuted
-        if (isMuted) {
-            tts?.stop()
-        }
-        return isMuted
-    }
-
-    fun isMuted(): Boolean = isMuted
-
-    /**
-     * Stop current speech.
-     */
-    fun stop() {
-        tts?.stop()
-    }
-
-    /**
-     * Check if TTS is ready to speak.
-     */
-    fun isReady(): Boolean = isReady.get()
-
-    /**
-     * Shutdown the TTS engine. Call when done with the service.
-     */
-    fun shutdown() {
-        tts?.stop()
-        tts?.shutdown()
-        tts = null
-        isReady.set(false)
     }
 
     private fun speak(text: String, utteranceId: String) {

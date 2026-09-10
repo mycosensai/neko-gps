@@ -5,7 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.nekogps.app.features.bookmarks.ParkingLocation
+import com.nekogps.app.features.findmycar.ParkingLocation
 import kotlinx.coroutines.flow.Flow
 
 @Dao

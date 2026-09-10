@@ -1,5 +1,6 @@
 package com.nekogps.app.features.integration
 
+import android.content.ActivityNotFoundException
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
@@ -24,9 +25,13 @@ data class CalendarEvent(
 class CalendarIntegrationManager(private val context: Context) {
 
     fun getUpcomingEventsWithLocation(limit: Int = 20): List<CalendarEvent> {
-        val result = mutableListOf<CalendarEvent>()
-        try {
-            val now = System.currentTimeMillis()
+        return runCatching { queryEvents(limit) }
+            .onFailure { Log.w("CalendarIntegrationManager", "getUpcomingEventsWithLocation: failed", it) }
+            .getOrDefault(emptyList())
+    }
+
+    private fun queryEvents(limit: Int): List<CalendarEvent> {
+        val now = System.currentTimeMillis()
             val uri: Uri = CalendarContract.Events.CONTENT_URI
             val projection = arrayOf(
                 CalendarContract.Events._ID,
@@ -39,34 +44,45 @@ class CalendarIntegrationManager(private val context: Context) {
             val args = arrayOf(now.toString())
             val sort = "${CalendarContract.Events.DTSTART} ASC"
             val cr: ContentResolver = context.contentResolver
-            cr.query(uri, projection, selection, args, sort)?.use { c ->
-                val idCol = c.getColumnIndex(CalendarContract.Events._ID)
-                val titleCol = c.getColumnIndex(CalendarContract.Events.TITLE)
-                val locCol = c.getColumnIndex(CalendarContract.Events.EVENT_LOCATION)
-                val startCol = c.getColumnIndex(CalendarContract.Events.DTSTART)
-                val endCol = c.getColumnIndex(CalendarContract.Events.DTEND)
-                while (c.moveToNext() && result.size < limit) {
-                    val location = if (locCol >= 0) c.getString(locCol).orEmpty() else ""
-                    if (location.isBlank()) continue
-                    result.add(
-                        CalendarEvent(
-                            id = if (idCol >= 0) c.getLong(idCol) else -1L,
-                            title = if (titleCol >= 0) c.getString(titleCol).orEmpty() else "",
-                            location = location,
-                            startTime = if (startCol >= 0) c.getLong(startCol) else 0L,
-                            endTime = if (endCol >= 0) c.getLong(endCol) else 0L
-                        )
-                    )
-                }
-            }
-        } catch (se: SecurityException) {
-            Log.w("CalendarIntegrationManager", "getUpcomingEventsWithLocation: suppressed SecurityException", se)
-            return emptyList()
-        } catch (e: Exception) {
-            Log.w("CalendarIntegrationManager", "getUpcomingEventsWithLocation: suppressed Exception", e)
-            return emptyList()
+            return cr.query(uri, projection, selection, args, sort)?.use { c ->
+                drainEvents(c, limit)
+            } ?: emptyList()
+    }
+
+    private fun drainEvents(c: android.database.Cursor, limit: Int): List<CalendarEvent> {
+        val result = mutableListOf<CalendarEvent>()
+        val idCol = c.getColumnIndex(CalendarContract.Events._ID)
+        val titleCol = c.getColumnIndex(CalendarContract.Events.TITLE)
+        val locCol = c.getColumnIndex(CalendarContract.Events.EVENT_LOCATION)
+        val startCol = c.getColumnIndex(CalendarContract.Events.DTSTART)
+        val endCol = c.getColumnIndex(CalendarContract.Events.DTEND)
+        while (c.moveToNext() && result.size < limit) {
+            toEvent(c, EventCols(idCol, titleCol, locCol, startCol, endCol))?.let { result.add(it) }
         }
         return result
+    }
+
+    private data class EventCols(
+        val idCol: Int,
+        val titleCol: Int,
+        val locCol: Int,
+        val startCol: Int,
+        val endCol: Int
+    )
+
+    private fun toEvent(
+        c: android.database.Cursor,
+        cols: EventCols
+    ): CalendarEvent? {
+        val location = if (cols.locCol >= 0) c.getString(cols.locCol).orEmpty() else ""
+        if (location.isBlank()) return null
+        return CalendarEvent(
+            id = if (cols.idCol >= 0) c.getLong(cols.idCol) else -1L,
+            title = if (cols.titleCol >= 0) c.getString(cols.titleCol).orEmpty() else "",
+            location = location,
+            startTime = if (cols.startCol >= 0) c.getLong(cols.startCol) else 0L,
+            endTime = if (cols.endCol >= 0) c.getLong(cols.endCol) else 0L
+        )
     }
 
     /** Opens the event location in the map via a geo: intent. */
@@ -78,7 +94,10 @@ class CalendarIntegrationManager(private val context: Context) {
             }
             context.startActivity(intent)
             true
-        } catch (e: Exception) {
+        } catch (e: ActivityNotFoundException) {
+            Log.w("CalendarIntegrationManager", "navigateToEvent: suppressed Exception", e)
+            false
+        } catch (e: SecurityException) {
             Log.w("CalendarIntegrationManager", "navigateToEvent: suppressed Exception", e)
             false
         }

@@ -20,7 +20,7 @@ import com.nekogps.app.features.speedcamera.SpeedCamera
 import com.nekogps.app.features.speedcamera.SpeedCameraManager
 import com.nekogps.app.features.voice.TextToSpeechService
 import com.nekogps.app.utils.DistanceCalculator
-import com.nekogps.app.utils.MapStateManager
+import com.nekogps.app.ui.MapStateManager
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -34,27 +34,29 @@ import kotlin.math.max
  * Features: osmdroid map, destination input, route calculation using waypoints,
  * distance/ETA display, simulated navigation instructions, and speed limit display.
  */
-class NavigationActivity : AppCompatActivity() {
+class NavigationActivity : NavigationMapBase() {
 
-    private lateinit var binding: ActivityNavigationBinding
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private lateinit var speedLimitManager: SpeedLimitManager
-    private lateinit var ttsService: TextToSpeechService
-    private lateinit var speedCameraManager: SpeedCameraManager
-    private val handler = Handler(Looper.getMainLooper())
     private val waypoints = mutableListOf<GeoPoint>()
     private var currentRoute: Polyline? = null
     private var destinationMarker: Marker? = null
-    private var isNavigating = false
-    private var navigationStep = 0
-    private var currentLocation: GeoPoint? = null
-    private var currentSpeed: Float = 0f
     private var lastSpokenInstruction: String? = null
     private var lastCameraAlertId: String? = null
 
     companion object {
-        private const val LOCATION_PERMISSION_REQUEST = 1001
+        private const val ASSUMED_AVERAGE_SPEED_KMH = 50.0
+        private const val ROUTE_LINE_WIDTH = 10f
+        private const val ROUTE_FIT_PADDING_PX = 100
+        private const val NAVIGATION_STEP_DELAY_MS = 3000L
     }
+
+    /**
+     * Validated inputs for building a route.
+     */
+    private data class RouteInput(
+        val origin: GeoPoint,
+        val destination: GeoPoint,
+        val destinationText: String
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,34 +71,7 @@ class NavigationActivity : AppCompatActivity() {
         speedCameraManager = SpeedCameraManager.getInstance(this)
 
         setupMap()
-        setupUI()
-        setupSpeedLimitManager()
-        setupSpeedCameraAlerts()
-        checkLocationPermission()
-    }
 
-    private fun setupMap() {
-        binding.mapView.setTileSource(TileSourceFactory.MAPNIK)
-        binding.mapView.setMultiTouchControls(true)
-        binding.mapView.controller.setZoom(15.0)
-
-        // Restore map state
-        MapStateManager.currentLocation.value?.let { loc ->
-            currentLocation = loc
-            binding.mapView.controller.setCenter(loc)
-        }
-
-        MapStateManager.recordedTracks.value.forEach { track ->
-            val polyline = Polyline().apply {
-                setPoints(track)
-                outlinePaint.color = ContextCompat.getColor(this@NavigationActivity, R.color.lavender_glow)
-                outlinePaint.strokeWidth = 8f
-            }
-            binding.mapView.overlays.add(polyline)
-        }
-    }
-
-    private fun setupUI() {
         binding.btnSearch.setOnClickListener {
             calculateRoute()
         }
@@ -106,32 +81,12 @@ class NavigationActivity : AppCompatActivity() {
         }
 
         binding.btnStopNav.setOnClickListener {
-            stopNavigation()
-        }
-    }
-
-    private fun setupSpeedLimitManager() {
-        speedLimitManager.onSpeedLimitChanged = { limit ->
-            runOnUiThread {
-                if (limit != null) {
-                    binding.tvSpeedLimit.text = "$limit km/h"
-                    binding.tvSpeedLimit.visibility = View.VISIBLE
-                    binding.tvSpeedLimitLabel.visibility = View.VISIBLE
-                } else {
-                    binding.tvSpeedLimit.text = "--"
-                }
-            }
+            stopNavigationSession()
         }
 
-        speedLimitManager.onSpeedWarning = { speed, limit ->
-            runOnUiThread {
-                binding.tvSpeedWarning.visibility = View.VISIBLE
-                binding.tvSpeedWarning.text = "⚠️ OVER LIMIT: $speed / $limit km/h"
-                handler.postDelayed({
-                    binding.tvSpeedWarning.visibility = View.GONE
-                }, 3000)
-            }
-        }
+        setupSpeedLimitManager()
+        setupSpeedCameraAlerts()
+        checkLocationPermission()
     }
 
     private fun setupSpeedCameraAlerts() {
@@ -141,7 +96,8 @@ class NavigationActivity : AppCompatActivity() {
                     lastCameraAlertId = camera.id
                     runOnUiThread {
                         binding.tvSpeedCameraWarning.visibility = View.VISIBLE
-                        binding.tvSpeedCameraWarning.text = "⚠️ Speed camera in ${distanceMeters.toInt()}m - Limit: ${camera.speedLimitKmh} km/h"
+                        binding.tvSpeedCameraWarning.text = "⚠️ Speed camera in " +
+                            "${distanceMeters.toInt()}m - Limit: ${camera.speedLimitKmh} km/h"
                         ttsService.speakSpeedCameraAlert(distanceMeters.toInt())
                     }
                 }
@@ -158,94 +114,13 @@ class NavigationActivity : AppCompatActivity() {
         })
     }
 
-    private fun checkLocationPermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ),
-                LOCATION_PERMISSION_REQUEST
-            )
-        } else {
-            requestLocationUpdates()
-        }
-    }
-
-    private fun requestLocationUpdates() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED) return
-
-        val locationRequest = LocationRequest.create().apply {
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-            interval = TimeUnit.SECONDS.toMillis(2)
-            fastestInterval = TimeUnit.SECONDS.toMillis(1)
-        }
-
-        fusedLocationClient.requestLocationUpdates(
-            locationRequest,
-            object : com.google.android.gms.location.LocationCallback() {
-                override fun onLocationResult(result: com.google.android.gms.location.LocationResult) {
-                    val loc = result.lastLocation ?: return
-                    val geoPoint = GeoPoint(loc.latitude, loc.longitude)
-                    currentLocation = geoPoint
-                    currentSpeed = loc.speed * 3.6f // m/s to km/h
-                    MapStateManager.updateCurrentLocation(geoPoint)
-
-                    if (MapStateManager.autoCenterEnabled.value) {
-                        binding.mapView.controller.animateTo(geoPoint)
-                    }
-
-                    updateCurrentLocationMarker(geoPoint)
-                    updateSpeedDisplay()
-                    speedLimitManager.updateLocation(geoPoint, currentSpeed)
-                    speedCameraManager.checkProximity(geoPoint, currentSpeed.toDouble())
-                }
-            },
-            Looper.getMainLooper()
-        )
-    }
-
-    private fun updateSpeedDisplay() {
-        runOnUiThread {
-            binding.tvSpeed.text = "${currentSpeed.toInt()} km/h"
-        }
-    }
-
-    private fun updateCurrentLocationMarker(point: GeoPoint) {
-        binding.mapView.overlays.removeAll { it is Marker && it.id == "current_location" }
-        val marker = Marker(binding.mapView).apply {
-            id = "current_location"
-            position = point
-            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-            title = "Current Location"
-        }
-        binding.mapView.overlays.add(marker)
-        binding.mapView.invalidate()
+    override fun onLocationUpdate(point: GeoPoint) {
+        speedLimitManager.updateLocation(point, currentSpeed)
+        speedCameraManager.checkProximity(point)
     }
 
     private fun calculateRoute() {
-        val destinationText = binding.etDestination.text.toString().trim()
-        if (destinationText.isEmpty()) {
-            Toast.makeText(this, "Please enter a destination", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val origin = currentLocation
-        if (origin == null) {
-            Toast.makeText(this, "Waiting for GPS fix...", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // Parse destination - expect "lat,lng" format or use Nominatim lookup
-        val destPoint = parseDestination(destinationText)
-        if (destPoint == null) {
-            Toast.makeText(this, "Invalid destination format. Use: lat,lng", Toast.LENGTH_SHORT).show()
-            return
-        }
+        val routeInput = resolveRouteInput() ?: return
 
         // Remove old route
         currentRoute?.let { binding.mapView.overlays.remove(it) }
@@ -253,25 +128,25 @@ class NavigationActivity : AppCompatActivity() {
 
         // Build route with waypoints
         val routePoints = mutableListOf<GeoPoint>()
-        routePoints.add(origin)
+        routePoints.add(routeInput.origin)
         routePoints.addAll(waypoints)
-        routePoints.add(destPoint)
+        routePoints.add(routeInput.destination)
 
         // Draw polyline
         val polyline = Polyline().apply {
             setPoints(routePoints)
             outlinePaint.color = ContextCompat.getColor(this@NavigationActivity, R.color.lavender_glow)
-            outlinePaint.strokeWidth = 10f
+            outlinePaint.strokeWidth = ROUTE_LINE_WIDTH
         }
         binding.mapView.overlays.add(polyline)
         currentRoute = polyline
 
         // Add destination marker
         val marker = Marker(binding.mapView).apply {
-            position = destPoint
+            position = routeInput.destination
             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
             title = "Destination"
-            snippet = destinationText
+            snippet = routeInput.destinationText
         }
         binding.mapView.overlays.add(marker)
         destinationMarker = marker
@@ -286,8 +161,7 @@ class NavigationActivity : AppCompatActivity() {
         }
 
         // Display stats
-        val avgSpeedKmh = 50.0 // Assume average speed for ETA
-        val etaMinutes = DistanceCalculator.estimateETA(totalDistance, avgSpeedKmh)
+        val etaMinutes = DistanceCalculator.estimateETA(totalDistance, ASSUMED_AVERAGE_SPEED_KMH)
 
         binding.tvDistance.text = DistanceCalculator.formatDistance(totalDistance)
         binding.tvEta.text = DistanceCalculator.formatETA(etaMinutes)
@@ -295,37 +169,28 @@ class NavigationActivity : AppCompatActivity() {
 
         // Fit map to route
         val boundingBox = polyline.bounds
-        binding.mapView.zoomToBoundingBox(boundingBox, true, 100)
+        binding.mapView.zoomToBoundingBox(boundingBox, true, ROUTE_FIT_PADDING_PX)
 
-        Toast.makeText(this, "Route calculated: ${DistanceCalculator.formatDistance(totalDistance)}", Toast.LENGTH_SHORT).show()
+        val routeSummary = "Route calculated: ${DistanceCalculator.formatDistance(totalDistance)}"
+        Toast.makeText(this, routeSummary, Toast.LENGTH_SHORT).show()
     }
 
-    private fun parseDestination(text: String): GeoPoint? {
-        // Try "lat,lng" format
-        val parts = text.split(",").map { it.trim() }
-        if (parts.size == 2) {
-            val lat = parts[0].toDoubleOrNull()
-            val lng = parts[1].toDoubleOrNull()
-            if (lat != null && lng != null && lat in -90.0..90.0 && lng in -180.0..180.0) {
-                return GeoPoint(lat, lng)
+    private fun resolveRouteInput(): RouteInput? {
+        val destinationText = binding.etDestination.text.toString().trim()
+        val origin = currentLocation
+        val destPoint = if (origin == null) null else DestinationParser.parse(destinationText)
+        if (destinationText.isEmpty() || origin == null || destPoint == null) {
+            val error = if (destinationText.isEmpty()) {
+                "Please enter a destination"
+            } else if (origin == null) {
+                "Waiting for GPS fix..."
+            } else {
+                "Invalid destination format. Use: lat,lng"
             }
+            Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
+            return null
         }
-        return null
-    }
-
-    private fun addCurrentLocationAsWaypoint() {
-        currentLocation?.let { loc ->
-            waypoints.add(loc)
-            val marker = Marker(binding.mapView).apply {
-                position = loc
-                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                title = "Waypoint ${waypoints.size}"
-                snippet = "Added waypoint"
-            }
-            binding.mapView.overlays.add(marker)
-            binding.mapView.invalidate()
-            Toast.makeText(this, "Waypoint ${waypoints.size} added", Toast.LENGTH_SHORT).show()
-        } ?: Toast.makeText(this, "No GPS fix available", Toast.LENGTH_SHORT).show()
+        return RouteInput(origin, destPoint, destinationText)
     }
 
     private fun startNavigation() {
@@ -348,17 +213,16 @@ class NavigationActivity : AppCompatActivity() {
     }
 
     private fun simulateNavigation() {
-        if (!isNavigating) return
-
-        val routePoints = currentRoute?.actualPoints ?: return
+        val routePoints = if (isNavigating) currentRoute?.actualPoints else null
+        if (routePoints == null) return
         if (navigationStep >= routePoints.size - 1) {
-            binding.tvInstruction.text = "You have arrived at your destination!"
-            isNavigating = false
-            binding.btnStopNav.visibility = View.GONE
-            binding.btnStartNav.visibility = View.VISIBLE
+            finishNavigationArrival()
             return
         }
+        advanceNavigationStep(routePoints)
+    }
 
+    private fun advanceNavigationStep(routePoints: List<GeoPoint>) {
         val current = routePoints[navigationStep]
         val next = routePoints[navigationStep + 1]
 
@@ -372,17 +236,7 @@ class NavigationActivity : AppCompatActivity() {
         )
 
         // Generate instruction based on bearing
-        val direction = when {
-            bearing >= 337.5 || bearing < 22.5 -> "Head north"
-            bearing >= 22.5 && bearing < 67.5 -> "Head northeast"
-            bearing >= 67.5 && bearing < 112.5 -> "Head east"
-            bearing >= 112.5 && bearing < 157.5 -> "Head southeast"
-            bearing >= 157.5 && bearing < 202.5 -> "Head south"
-            bearing >= 202.5 && bearing < 247.5 -> "Head southwest"
-            bearing >= 247.5 && bearing < 292.5 -> "Head west"
-            bearing >= 292.5 && bearing < 337.5 -> "Head northwest"
-            else -> "Continue"
-        }
+        val direction = BearingDirections.toDirection(bearing)
 
         val instruction = "$direction for ${DistanceCalculator.formatDistance(distance)}, then continue to next point."
         binding.tvInstruction.text = instruction
@@ -396,42 +250,14 @@ class NavigationActivity : AppCompatActivity() {
         handler.postDelayed({
             navigationStep++
             simulateNavigation()
-        }, 3000)
+        }, NAVIGATION_STEP_DELAY_MS)
     }
 
-    private fun stopNavigation() {
+    private fun finishNavigationArrival() {
+        binding.tvInstruction.text = "You have arrived at your destination!"
         isNavigating = false
-        handler.removeCallbacksAndMessages(null)
         binding.btnStopNav.visibility = View.GONE
         binding.btnStartNav.visibility = View.VISIBLE
-        binding.tvInstruction.text = "Navigation stopped"
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == LOCATION_PERMISSION_REQUEST && grantResults.isNotEmpty()
-            && grantResults[0] == PackageManager.PERMISSION_GRANTED
-        ) {
-            requestLocationUpdates()
-        } else {
-            Toast.makeText(this, "Location permission required for navigation", Toast.LENGTH_LONG).show()
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        binding.mapView.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        binding.mapView.onPause()
-        isNavigating = false
-        handler.removeCallbacksAndMessages(null)
     }
 
     override fun onDestroy() {

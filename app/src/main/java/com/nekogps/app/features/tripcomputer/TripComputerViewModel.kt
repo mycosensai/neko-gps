@@ -11,7 +11,13 @@ import java.util.concurrent.TimeUnit
  * ViewModel for tracking trip statistics in real-time.
  * Tracks distance traveled, elapsed time, average speed, max speed, and fuel cost estimate.
  */
-class TripComputerViewModel : ViewModel() {
+class TripComputerViewModel : TripStatsBase() {
+
+    companion object {
+        private const val MIN_MOVING_SPEED_KMH = 0.5
+        private const val MILLIS_PER_HOUR = 3_600_000.0
+        private const val METERS_PER_KILOMETER = 1000.0
+    }
 
     private val _tripDistanceMeters = MutableLiveData(0.0)
     val tripDistanceMeters: LiveData<Double> = _tripDistanceMeters
@@ -38,16 +44,8 @@ class TripComputerViewModel : ViewModel() {
     val topSpeedKmh: LiveData<Double> = _topSpeedKmh
 
     // Trip tracking data
-    private var tripStartTime: Long = 0L
     private var lastLocation: GeoPoint? = null
-    private var totalDistance = 0.0
     private var speedReadings = mutableListOf<Double>()
-    private var pausedDuration = 0L
-    private var pauseStartTime = 0L
-
-    // Fuel calculation constants
-    private var fuelConsumptionPer100km = 7.0 // liters per 100km (default)
-    private var fuelPricePerLiter = 1.50 // currency per liter (default)
 
     /**
      * Start a new trip.
@@ -129,7 +127,7 @@ class TripComputerViewModel : ViewModel() {
         lastLocation = location
 
         // Track speed readings for average calculation
-        if (speedKmh > 0.5) { // Only count when actually moving
+        if (speedKmh > MIN_MOVING_SPEED_KMH) { // Only count when actually moving
             speedReadings.add(speedKmh)
         }
 
@@ -139,44 +137,17 @@ class TripComputerViewModel : ViewModel() {
     /**
      * Set fuel consumption rate (liters per 100km).
      */
-    fun setFuelConsumption(litersPer100km: Double) {
-        fuelConsumptionPer100km = litersPer100km
+    override fun setFuelConsumption(litersPer100km: Double) {
+        super.setFuelConsumption(litersPer100km)
         updateStats()
     }
 
     /**
      * Set fuel price per liter.
      */
-    fun setFuelPrice(pricePerLiter: Double) {
-        fuelPricePerLiter = pricePerLiter
+    override fun setFuelPrice(pricePerLiter: Double) {
+        super.setFuelPrice(pricePerLiter)
         updateStats()
-    }
-
-    /**
-     * Get formatted distance string.
-     */
-    fun getFormattedDistance(useImperial: Boolean = false): String {
-        return DistanceCalculator.formatDistance(totalDistance, useImperial)
-    }
-
-    /**
-     * Get formatted elapsed time string.
-     */
-    fun getFormattedElapsedTime(): String {
-        val elapsed = getActiveElapsedTimeMillis()
-        val hours = TimeUnit.MILLISECONDS.toHours(elapsed)
-        val minutes = TimeUnit.MILLISECONDS.toMinutes(elapsed) % 60
-        val seconds = TimeUnit.MILLISECONDS.toSeconds(elapsed) % 60
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
-    }
-
-    /**
-     * Get active elapsed time (excluding paused duration).
-     */
-    fun getActiveElapsedTimeMillis(): Long {
-        if (tripStartTime == 0L) return 0L
-        val current = if (pauseStartTime > 0) pauseStartTime else System.currentTimeMillis()
-        return current - tripStartTime - pausedDuration
     }
 
     /**
@@ -200,15 +171,18 @@ class TripComputerViewModel : ViewModel() {
         val avgSpeed = if (speedReadings.isNotEmpty()) {
             speedReadings.average()
         } else {
-            val elapsedHours = getActiveElapsedTimeMillis() / 3_600_000.0
-            if (elapsedHours > 0) (totalDistance / 1000.0) / elapsedHours else 0.0
+            val elapsedHours = getActiveElapsedTimeMillis() / MILLIS_PER_HOUR
+            if (elapsedHours > 0) {
+                (totalDistance / METERS_PER_KILOMETER) / elapsedHours
+            } else {
+                0.0
+            }
         }
         _averageSpeedKmh.value = avgSpeed
 
         // Calculate fuel cost
-        val distanceKm = totalDistance / 1000.0
-        val fuelUsed = (distanceKm / 100.0) * fuelConsumptionPer100km
-        _fuelCostEstimate.value = fuelUsed * fuelPricePerLiter
+        val distanceKm = totalDistance / METERS_PER_KILOMETER
+        _fuelCostEstimate.value = calculateFuelCost(distanceKm)
     }
 
     override fun onCleared() {

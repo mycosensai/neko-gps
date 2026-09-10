@@ -9,6 +9,8 @@ class RoundTripGenerator(private val context: Context) {
     companion object {
         private const val TAG = "RoundTripGenerator"
         private const val DEFAULT_AVG_SPEED_KMH = 50.0
+        private const val SHORTER_RETURN_RATIO = 0.4
+        private const val SCENIC_OFFSET_DEGREES = 0.01
     }
 
     data class RoundTripResult(
@@ -41,11 +43,15 @@ class RoundTripGenerator(private val context: Context) {
         val avoidTolls: Boolean = false, val avoidHighways: Boolean = false, val avoidFerries: Boolean = false
     )
 
-    suspend fun generateRoundTrip(config: RoundTripConfig, routeOptionsManager: RouteOptionsManager? = null, alternativeRoutes: AlternativeRoutes? = null): RoundTripResult {
+    suspend fun generateRoundTrip(
+        config: RoundTripConfig,
+        routeOptionsManager: RouteOptionsManager? = null,
+        alternativeRoutes: AlternativeRoutes? = null
+    ): RoundTripResult {
         Log.d(TAG, "Generating round trip from ${config.origin} to ${config.destination}")
         val outboundRoute = calculateOutboundRoute(config)
         val returnRoute = if (config.optimizeReturn && alternativeRoutes != null) {
-            calculateOptimizedReturnRoute(config, alternativeRoutes)
+            calculateOptimizedReturnRoute(config, alternativeRoutes, routeOptionsManager)
         } else calculateDirectReturnRoute(config)
         val returnWaypoint = if (config.returnWaypointLat != null && config.returnWaypointLon != null) {
             GeoPoint(config.returnWaypointLat!!, config.returnWaypointLon!!)
@@ -57,7 +63,21 @@ class RoundTripGenerator(private val context: Context) {
         val returnEta = DistanceCalculator.estimateETA(returnDistance, DEFAULT_AVG_SPEED_KMH)
         val totalEta = outboundEta + returnEta
         Log.d(TAG, "Round trip generated: total distance ${DistanceCalculator.formatDistance(totalDistance)}")
-        return RoundTripResult(outboundRoute, returnRoute, config.waypoints, returnWaypoint, config.origin, config.destination, outboundDistance, returnDistance, totalDistance, outboundEta, returnEta, totalEta, config.returnWaypointName)
+        return RoundTripResult(
+            outboundRoute = outboundRoute,
+            returnRoute = returnRoute,
+            outboundWaypoints = config.waypoints,
+            returnWaypoint = returnWaypoint,
+            origin = config.origin,
+            destination = config.destination,
+            outboundDistanceMeters = outboundDistance,
+            returnDistanceMeters = returnDistance,
+            totalDistanceMeters = totalDistance,
+            outboundEtaMinutes = outboundEta,
+            returnEtaMinutes = returnEta,
+            totalEtaMinutes = totalEta,
+            returnWaypointName = config.returnWaypointName
+        )
     }
 
     private fun calculateOutboundRoute(config: RoundTripConfig): List<GeoPoint> {
@@ -66,11 +86,22 @@ class RoundTripGenerator(private val context: Context) {
         return route
     }
 
-    private suspend fun calculateOptimizedReturnRoute(config: RoundTripConfig, alternativeRoutes: AlternativeRoutes): List<GeoPoint> {
+    private suspend fun calculateOptimizedReturnRoute(
+        config: RoundTripConfig,
+        alternativeRoutes: AlternativeRoutes,
+        routeOptionsManager: RouteOptionsManager? = null
+    ): List<GeoPoint> {
+        val useOptionsManager = config.avoidTolls || config.avoidHighways || config.avoidFerries
+        val optionsManager = if (useOptionsManager) {
+            routeOptionsManager ?: RouteOptionsManager(context)
+        } else {
+            null
+        }
         val alternatives = alternativeRoutes.calculateAlternatives(
-            origin = config.destination, destination = config.origin,
+            origin = config.destination,
+            destination = config.origin,
             waypoints = config.waypoints.reversed(),
-            routeOptionsManager = if (config.avoidTolls || config.avoidHighways || config.avoidFerries) { RouteOptionsManager(context) } else null
+            routeOptionsManager = optionsManager
         )
         val bestRoute = alternatives.routes.minByOrNull { it.distanceMeters }
         return bestRoute?.routePoints ?: calculateDirectReturnRoute(config)
@@ -83,7 +114,9 @@ class RoundTripGenerator(private val context: Context) {
         if (config.returnWaypointLat != null && config.returnWaypointLon != null) {
             val midPoint = GeoPoint(config.returnWaypointLat!!, config.returnWaypointLon!!)
             val midIndex = returnWaypoints.size / 2
-            route.addAll(returnWaypoints.take(midIndex)); route.add(midPoint); route.addAll(returnWaypoints.drop(midIndex))
+            route.addAll(returnWaypoints.take(midIndex))
+            route.add(midPoint)
+            route.addAll(returnWaypoints.drop(midIndex))
         } else { route.addAll(returnWaypoints) }
         route.add(config.origin)
         return route
@@ -92,19 +125,46 @@ class RoundTripGenerator(private val context: Context) {
     private fun calculateRouteDistance(points: List<GeoPoint>): Double {
         if (points.size < 2) return 0.0
         var totalDistance = 0.0
-        for (i in 0 until points.size - 1) { totalDistance += DistanceCalculator.haversineDistance(points[i].latitude, points[i].longitude, points[i + 1].latitude, points[i + 1].longitude) }
+        for (i in 0 until points.size - 1) {
+            totalDistance += DistanceCalculator.haversineDistance(
+                points[i].latitude,
+                points[i].longitude,
+                points[i + 1].latitude,
+                points[i + 1].longitude
+            )
+        }
         return totalDistance
     }
 
-    fun calculateMidwayWaypoint(origin: GeoPoint, destination: GeoPoint, strategy: MidwayStrategy = MidwayStrategy.MIDPOINT): GeoPoint {
+    fun calculateMidwayWaypoint(
+        origin: GeoPoint,
+        destination: GeoPoint,
+        strategy: MidwayStrategy = MidwayStrategy.MIDPOINT
+    ): GeoPoint {
         return when (strategy) {
-            MidwayStrategy.MIDPOINT -> GeoPoint((origin.latitude + destination.latitude) / 2.0, (origin.longitude + destination.longitude) / 2.0)
-            MidwayStrategy.SHORTER_RETURN -> GeoPoint(destination.latitude + (origin.latitude - destination.latitude) * 0.4, destination.longitude + (origin.longitude - destination.longitude) * 0.4)
-            MidwayStrategy.SCENIC -> { val midLat = (origin.latitude + destination.latitude) / 2.0; val midLon = (origin.longitude + destination.longitude) / 2.0; GeoPoint(midLat + 0.01, midLon + 0.01) }
+            MidwayStrategy.MIDPOINT -> GeoPoint(
+                (origin.latitude + destination.latitude) / 2.0,
+                (origin.longitude + destination.longitude) / 2.0
+            )
+            MidwayStrategy.SHORTER_RETURN -> GeoPoint(
+                destination.latitude +
+                    (origin.latitude - destination.latitude) * SHORTER_RETURN_RATIO,
+                destination.longitude +
+                    (origin.longitude - destination.longitude) * SHORTER_RETURN_RATIO
+            )
+            MidwayStrategy.SCENIC -> {
+                val midLat = (origin.latitude + destination.latitude) / 2.0
+                val midLon = (origin.longitude + destination.longitude) / 2.0
+                GeoPoint(midLat + SCENIC_OFFSET_DEGREES, midLon + SCENIC_OFFSET_DEGREES)
+            }
         }
     }
 
-    enum class MidwayStrategy(val label: String) { MIDPOINT("Midpoint"), SHORTER_RETURN("Shorter Return"), SCENIC("Scenic") }
+    enum class MidwayStrategy(val label: String) {
+        MIDPOINT("Midpoint"),
+        SHORTER_RETURN("Shorter Return"),
+        SCENIC("Scenic")
+    }
 
     fun formatRoundTripResult(result: RoundTripResult): String {
         return buildString {

@@ -17,6 +17,9 @@ class FuelPriceManager(private val context: Context) {
         private const val KEY_STATIONS = "station_data"
         private const val KEY_LAST_FETCH = "last_fetch_time"
         private const val CACHE_TTL_MS = 3600_000L
+        private const val METERS_PER_KILOMETER = 1000
+        private const val LITERS_PER_GALLON = 3.78541
+        private const val EARTH_RADIUS_METERS = 6371000.0
     }
 
     fun getNearbyStations(lat: Double, lon: Double, radiusKm: Double = 20.0): List<FuelStation> {
@@ -24,7 +27,7 @@ class FuelPriceManager(private val context: Context) {
         return allStations
             .filter { station ->
                 val dist = distance(lat, lon, station.latitude, station.longitude)
-                dist <= radiusKm * 1000
+                dist <= radiusKm * METERS_PER_KILOMETER
             }
             .sortedBy { it.pricePerLiter }
     }
@@ -38,7 +41,7 @@ class FuelPriceManager(private val context: Context) {
         return if (useMetric) {
             "$%.2f/L".format(price)
         } else {
-            "$%.2f/gal".format(price * 3.78541)
+            "$%.2f/gal".format(price * LITERS_PER_GALLON)
         }
     }
 
@@ -62,13 +65,13 @@ class FuelPriceManager(private val context: Context) {
     }
 
     private fun distance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-        val R = 6371000.0
+        val earthRadiusMeters = EARTH_RADIUS_METERS
         val dLat = Math.toRadians(lat2 - lat1)
         val dLon = Math.toRadians(lon2 - lon1)
         val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
                 Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
                 Math.sin(dLon / 2) * Math.sin(dLon / 2)
         val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-        return R * c
+        return earthRadiusMeters * c
     }
 }

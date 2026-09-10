@@ -14,96 +14,23 @@ class AchievementManager(context: Context) {
 
     val allAchievements: Flow<List<AchievementEntity>> = dao.getAllAchievements()
 
+    companion object {
+        private const val METERS_PER_KILOMETER = 1000.0
+        private const val FIRST_KM_THRESHOLD = 1.0
+        private const val TEN_KM_THRESHOLD = 10.0
+        private const val HUNDRED_KM_THRESHOLD = 100.0
+        private const val THOUSAND_KM_THRESHOLD = 1000.0
+        private const val TEN_BOOKMARKS_THRESHOLD = 10
+        private const val FIVE_TRACKS_THRESHOLD = 5
+        private const val FIVE_PHOTOS_THRESHOLD = 5
+        private const val THREE_CHALLENGES_THRESHOLD = 3
+    }
+
     /**
      * Defines all available achievements with their key, name, description, and icon.
      */
     fun getAllAchievementDefinitions(): List<AchievementDefinition> {
-        return listOf(
-            AchievementDefinition(
-                key = "first_km",
-                name = "First Kilometer",
-                description = "Travel your first 1 km",
-                icon = "🚀"
-            ),
-            AchievementDefinition(
-                key = "first_10km",
-                name = "Ten Klicks",
-                description = "Travel 10 km total",
-                icon = "🏃"
-            ),
-            AchievementDefinition(
-                key = "first_100km",
-                name = "Century Club",
-                description = "Travel 100 km total",
-                icon = "🏆"
-            ),
-            AchievementDefinition(
-                key = "first_1000km",
-                name = "Kilometer King",
-                description = "Travel 1000 km total",
-                icon = "👑"
-            ),
-            AchievementDefinition(
-                key = "first_bookmark",
-                name = "Bookworm",
-                description = "Create your first bookmark",
-                icon = "🔖"
-            ),
-            AchievementDefinition(
-                key = "ten_bookmarks",
-                name = "Bookmark Collector",
-                description = "Create 10 bookmarks",
-                icon = "📚"
-            ),
-            AchievementDefinition(
-                key = "first_track",
-                name = "Pathfinder",
-                description = "Record your first track",
-                icon = "🗺️"
-            ),
-            AchievementDefinition(
-                key = "five_tracks",
-                name = "Explorer",
-                description = "Record 5 tracks",
-                icon = "🌍"
-            ),
-            AchievementDefinition(
-                key = "first_photo_waypoint",
-                name = "Photographer",
-                description = "Take your first photo waypoint",
-                icon = "📸"
-            ),
-            AchievementDefinition(
-                key = "five_photo_waypoints",
-                name = "Photo Album",
-                description = "Take 5 photo waypoints",
-                icon = "🎞️"
-            ),
-            AchievementDefinition(
-                key = "first_challenge",
-                name = "Challenge Accepted",
-                description = "Complete your first location challenge",
-                icon = "✅"
-            ),
-            AchievementDefinition(
-                key = "three_challenges",
-                name = "Challenge Master",
-                description = "Complete 3 location challenges",
-                icon = "💪"
-            ),
-            AchievementDefinition(
-                key = "first_navigation",
-                name = "Navigator",
-                description = "Complete your first navigation",
-                icon = "🧭"
-            ),
-            AchievementDefinition(
-                key = "speed_demon",
-                name = "Speed Demon",
-                description = "Reach a max speed of 150 km/h",
-                icon = "💨"
-            )
-        )
+        return AchievementDefinitions.all()
     }
 
     /**
@@ -131,25 +58,20 @@ class AchievementManager(context: Context) {
      */
     suspend fun checkDistanceMilestones(totalDistanceMeters: Double): List<String> {
         val unlocked = mutableListOf<String>()
-        val distanceKm = totalDistanceMeters / 1000.0
+        val distanceKm = totalDistanceMeters / METERS_PER_KILOMETER
 
         val definitions = getAllAchievementDefinitions()
 
         val thresholds = mapOf(
-            "first_km" to 1.0,
-            "first_10km" to 10.0,
-            "first_100km" to 100.0,
-            "first_1000km" to 1000.0
+            "first_km" to FIRST_KM_THRESHOLD,
+            "first_10km" to TEN_KM_THRESHOLD,
+            "first_100km" to HUNDRED_KM_THRESHOLD,
+            "first_1000km" to THOUSAND_KM_THRESHOLD
         )
 
         for ((key, thresholdKm) in thresholds) {
-            if (distanceKm >= thresholdKm) {
-                val def = definitions.find { it.key == key }
-                if (def != null) {
-                    val wasUnlocked = unlockAchievement(key, def.name, def.description, def.icon)
-                    if (wasUnlocked) unlocked.add(key)
-                }
-            }
+            if (distanceKm < thresholdKm) continue
+            unlockMilestoneIfDefined(key, definitions, unlocked)
         }
         return unlocked
     }
@@ -162,23 +84,38 @@ class AchievementManager(context: Context) {
         val definitions = getAllAchievementDefinitions()
 
         val criteria = when (category) {
-            "bookmark" -> listOf("first_bookmark" to 1, "ten_bookmarks" to 10)
-            "track" -> listOf("first_track" to 1, "five_tracks" to 5)
-            "photo_waypoint" -> listOf("first_photo_waypoint" to 1, "five_photo_waypoints" to 5)
-            "challenge" -> listOf("first_challenge" to 1, "three_challenges" to 3)
+            "bookmark" -> listOf(
+                "first_bookmark" to 1,
+                "ten_bookmarks" to TEN_BOOKMARKS_THRESHOLD
+            )
+            "track" -> listOf("first_track" to 1, "five_tracks" to FIVE_TRACKS_THRESHOLD)
+            "photo_waypoint" -> listOf(
+                "first_photo_waypoint" to 1,
+                "five_photo_waypoints" to FIVE_PHOTOS_THRESHOLD
+            )
+            "challenge" -> listOf(
+                "first_challenge" to 1,
+                "three_challenges" to THREE_CHALLENGES_THRESHOLD
+            )
             else -> emptyList()
         }
 
         for ((key, threshold) in criteria) {
-            if (count >= threshold) {
-                val def = definitions.find { it.key == key }
-                if (def != null) {
-                    val wasUnlocked = unlockAchievement(key, def.name, def.description, def.icon)
-                    if (wasUnlocked) unlocked.add(key)
-                }
-            }
+            if (count < threshold) continue
+            unlockMilestoneIfDefined(key, definitions, unlocked)
         }
         return unlocked
+    }
+
+    private suspend fun unlockMilestoneIfDefined(
+        key: String,
+        definitions: List<AchievementDefinition>,
+        unlocked: MutableList<String>
+    ) {
+        val def = definitions.find { it.key == key } ?: return
+        if (unlockAchievement(key, def.name, def.description, def.icon)) {
+            unlocked.add(key)
+        }
     }
 
     suspend fun getUnlockedCount(): Int {

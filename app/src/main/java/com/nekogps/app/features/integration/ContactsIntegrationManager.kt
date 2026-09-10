@@ -1,5 +1,6 @@
 package com.nekogps.app.features.integration
 
+import android.content.ActivityNotFoundException
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
@@ -21,9 +22,13 @@ data class NavigableContact(
 class ContactsIntegrationManager(private val context: Context) {
 
     fun searchContactsByName(query: String, limit: Int = 20): List<NavigableContact> {
-        val result = mutableListOf<NavigableContact>()
-        try {
-            val cr: ContentResolver = context.contentResolver
+        return runCatching { queryContacts(query, limit) }
+            .onFailure { Log.w("ContactsIntegrationManager", "searchContactsByName: failed", it) }
+            .getOrDefault(emptyList())
+    }
+
+    private fun queryContacts(query: String, limit: Int): List<NavigableContact> {
+        val cr: ContentResolver = context.contentResolver
             val uri: Uri = ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_URI
             val projection = arrayOf(
                 ContactsContract.CommonDataKinds.StructuredPostal.CONTACT_ID,
@@ -32,30 +37,44 @@ class ContactsIntegrationManager(private val context: Context) {
             )
             val selection = "${ContactsContract.CommonDataKinds.StructuredPostal.DISPLAY_NAME} LIKE ?"
             val args = arrayOf("%$query%")
-            cr.query(uri, projection, selection, args, null)?.use { c ->
-                val idCol = c.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.CONTACT_ID)
-                val nameCol = c.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.DISPLAY_NAME)
-                val addrCol = c.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS)
-                while (c.moveToNext() && result.size < limit) {
-                    val address = if (addrCol >= 0) c.getString(addrCol).orEmpty() else ""
-                    if (address.isBlank()) continue
-                    result.add(
-                        NavigableContact(
-                            id = if (idCol >= 0) c.getLong(idCol) else -1L,
-                            name = if (nameCol >= 0) c.getString(nameCol).orEmpty() else "",
-                            address = address
-                        )
-                    )
-                }
-            }
-        } catch (se: SecurityException) {
-            Log.w("ContactsIntegrationManager", "searchContactsByName: suppressed SecurityException", se)
-            return emptyList()
-        } catch (e: Exception) {
-            Log.w("ContactsIntegrationManager", "searchContactsByName: suppressed Exception", e)
-            return emptyList()
+            return cr.query(uri, projection, selection, args, null)?.use { c ->
+                drainContacts(c, limit)
+            } ?: emptyList()
+    }
+
+    private fun drainContacts(
+        c: android.database.Cursor,
+        limit: Int
+    ): List<NavigableContact> {
+        val result = mutableListOf<NavigableContact>()
+        val idCol = c.getColumnIndex(
+            ContactsContract.CommonDataKinds.StructuredPostal.CONTACT_ID
+        )
+        val nameCol = c.getColumnIndex(
+            ContactsContract.CommonDataKinds.StructuredPostal.DISPLAY_NAME
+        )
+        val addrCol = c.getColumnIndex(
+            ContactsContract.CommonDataKinds.StructuredPostal.FORMATTED_ADDRESS
+        )
+        while (c.moveToNext() && result.size < limit) {
+            toContact(c, idCol, nameCol, addrCol)?.let { result.add(it) }
         }
         return result
+    }
+
+    private fun toContact(
+        c: android.database.Cursor,
+        idCol: Int,
+        nameCol: Int,
+        addrCol: Int
+    ): NavigableContact? {
+        val address = if (addrCol >= 0) c.getString(addrCol).orEmpty() else ""
+        if (address.isBlank()) return null
+        return NavigableContact(
+            id = if (idCol >= 0) c.getLong(idCol) else -1L,
+            name = if (nameCol >= 0) c.getString(nameCol).orEmpty() else "",
+            address = address
+        )
     }
 
     /** Opens the contact address in the map via a geo: intent. */
@@ -67,7 +86,10 @@ class ContactsIntegrationManager(private val context: Context) {
             }
             context.startActivity(intent)
             true
-        } catch (e: Exception) {
+        } catch (e: ActivityNotFoundException) {
+            Log.w("ContactsIntegrationManager", "navigateToContact: suppressed Exception", e)
+            false
+        } catch (e: SecurityException) {
             Log.w("ContactsIntegrationManager", "navigateToContact: suppressed Exception", e)
             false
         }

@@ -29,7 +29,7 @@ class FoldableSupportManager {
 
     /** Call from Activity.onConfigurationChanged(). */
     fun onConfigurationChanged(activity: Activity, newConfig: Configuration) {
-        val posture = detectPosture(activity)
+        val posture = detectPosture(activity, newConfig.orientation)
         if (posture != lastPosture) {
             lastPosture = posture
             listener?.onPostureChanged(posture)
@@ -81,14 +81,12 @@ class FoldableSupportManager {
     }
 
     /** Heuristic posture detection without androidx.window. */
-    private fun detectPosture(activity: Activity): Posture {
-        val config = activity.resources.configuration
+    private fun detectPosture(
+        activity: Activity,
+        orientation: Int = activity.resources.configuration.orientation
+    ): Posture {
         val metrics = activity.resources.displayMetrics
         val hinge = hingeBounds(activity)
-
-        // Dual-screen devices report a hinge / fold gap via display cutout-ish APIs
-        // on newer OEMs; fall back to extreme aspect ratios.
-        if (hinge != null && !hinge.isEmpty) return Posture.DUAL_SCREEN
 
         val wDp = metrics.widthPixels / metrics.density
         val hDp = metrics.heightPixels / metrics.density
@@ -96,12 +94,14 @@ class FoldableSupportManager {
 
         // Half-folded (flex/tabletop) keeps a squarish window with landscape hinge;
         // best framework signal pre-WindowManager is orientation + small height.
-        if (config.orientation == Configuration.ORIENTATION_LANDSCAPE && hDp < 500) {
-            return Posture.HALF_FOLDED
+        return when {
+            hinge != null && !hinge.isEmpty -> Posture.DUAL_SCREEN
+            orientation == Configuration.ORIENTATION_LANDSCAPE &&
+                hDp < HALF_FOLDED_MAX_HEIGHT_DP -> Posture.HALF_FOLDED
+            wDp >= DUAL_SCREEN_MIN_WIDTH_DP || (ratio > DUAL_SCREEN_MIN_RATIO) -> Posture.DUAL_SCREEN
+            wDp >= TABLET_MIN_WIDTH_DP -> Posture.FLAT_OPEN
+            else -> Posture.FLAT_CLOSED
         }
-        if (wDp >= 840 || (ratio > 2.2f)) return Posture.DUAL_SCREEN
-        if (wDp >= 600) return Posture.FLAT_OPEN
-        return Posture.FLAT_CLOSED
     }
 
     private fun isSpanning(activity: Activity): Boolean {
@@ -116,12 +116,16 @@ class FoldableSupportManager {
                 val cutout = activity.window?.decorView?.rootWindowInsets?.displayCutout
                 cutout?.boundingRects?.firstOrNull()
             } else null
-        } catch (e: Exception) {
+        } catch (e: IllegalStateException) {
             Log.w("FoldableSupportManager", "hingeBounds: suppressed Exception", e)
             null }
     }
 
     companion object {
         private const val TAG = "FoldableSupport"
+        private const val HALF_FOLDED_MAX_HEIGHT_DP = 500f
+        private const val DUAL_SCREEN_MIN_WIDTH_DP = 840f
+        private const val DUAL_SCREEN_MIN_RATIO = 2.2f
+        private const val TABLET_MIN_WIDTH_DP = 600f
     }
 }

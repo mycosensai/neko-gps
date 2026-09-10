@@ -11,7 +11,9 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.textfield.TextInputEditText
 import com.nekogps.app.R
 import kotlinx.coroutines.launch
+import android.util.Log
 import java.io.File
+import java.io.IOException
 
 /**
  * PhotoWaypointActivity - allows users to take a photo at a location
@@ -82,7 +84,12 @@ class PhotoWaypointActivity : AppCompatActivity() {
             val timeStamp = System.currentTimeMillis()
             val image = File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
             image
-        } catch (e: Exception) {
+        } catch (e: IOException) {
+            Log.w("PhotoWaypointActivity", "createImageFile failed", e)
+            Toast.makeText(this, "Error creating file: ${e.message}", Toast.LENGTH_SHORT).show()
+            null
+        } catch (e: IllegalArgumentException) {
+            Log.w("PhotoWaypointActivity", "createImageFile failed", e)
             Toast.makeText(this, "Error creating file: ${e.message}", Toast.LENGTH_SHORT).show()
             null
         }
@@ -117,7 +124,7 @@ class PhotoWaypointActivity : AppCompatActivity() {
         val lon = intent.getDoubleExtra("lon", 0.0)
 
         lifecycleScope.launch {
-            val id = photoWaypointManager.addPhotoWaypoint(
+            val input = PhotoWaypointManager.PhotoWaypointInput(
                 waypointId = targetWaypointId,
                 bookmarkId = targetBookmarkId,
                 photoPath = photoPath,
@@ -125,6 +132,7 @@ class PhotoWaypointActivity : AppCompatActivity() {
                 longitude = lon,
                 caption = caption
             )
+            val id = photoWaypointManager.addPhotoWaypoint(input)
             if (targetWaypointId > 0) {
                 Toast.makeText(this@PhotoWaypointActivity, "Photo saved to waypoint!", Toast.LENGTH_SHORT).show()
             } else if (targetBookmarkId > 0) {

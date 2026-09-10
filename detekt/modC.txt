@@ -1,0 +1,2 @@
+TooGenericExceptionCaught - [e] at C:\Users\vdako\neko-gps\native-android\app\src\main\java\com\nekogps\app\features\gamification\PhotoWaypointActivity.kt:85:18 - Signature=PhotoWaypointActivity.kt$PhotoWaypointActivity$e: Exception
+UnusedParameter - [routeOptionsManager] at C:\Users\vdako\neko-gps\native-android\app\src\main\java\com\nekogps\app\features\routing\RoundTripGenerator.kt:48:9 - Signature=RoundTripGenerator.kt$RoundTripGenerator$routeOptionsManager: RouteOptionsManager? = null

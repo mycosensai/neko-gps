@@ -142,7 +142,7 @@ class FatigueDetectionManager private constructor(private val context: Context) 
     fun getBreakIntervalMinutes(): Int = prefs.getInt(KEY_BREAK_INTERVAL_MINUTES, DEFAULT_BREAK_INTERVAL_MINUTES)
 
     fun setBreakIntervalMinutes(minutes: Int) {
-        val clamped = minutes.coerceIn(30, 480) // 30 min to 8 hours
+        val clamped = minutes.coerceIn(MIN_BREAK_INTERVAL_MINUTES, MAX_BREAK_INTERVAL_MINUTES)
         prefs.edit().putInt(KEY_BREAK_INTERVAL_MINUTES, clamped).apply()
         listeners.forEach { it.onSettingsChanged() }
     }
@@ -150,7 +150,7 @@ class FatigueDetectionManager private constructor(private val context: Context) 
     fun getWarningBeforeMinutes(): Int = prefs.getInt(KEY_WARNING_BEFORE_MINUTES, DEFAULT_WARNING_BEFORE_MINUTES)
 
     fun setWarningBeforeMinutes(minutes: Int) {
-        val clamped = minutes.coerceIn(1, 60)
+        val clamped = minutes.coerceIn(MIN_WARNING_BEFORE_MINUTES, MAX_WARNING_BEFORE_MINUTES)
         prefs.edit().putInt(KEY_WARNING_BEFORE_MINUTES, clamped).apply()
         listeners.forEach { it.onSettingsChanged() }
     }
@@ -158,7 +158,7 @@ class FatigueDetectionManager private constructor(private val context: Context) 
     fun getAutoPauseThresholdKmh(): Float = prefs.getFloat(KEY_AUTO_PAUSE_THRESHOLD_KMH, DEFAULT_AUTO_PAUSE_THRESHOLD_KMH)
 
     fun setAutoPauseThresholdKmh(threshold: Float) {
-        val clamped = threshold.coerceIn(1f, 20f)
+        val clamped = threshold.coerceIn(MIN_AUTO_PAUSE_THRESHOLD_KMH, MAX_AUTO_PAUSE_THRESHOLD_KMH)
         prefs.edit().putFloat(KEY_AUTO_PAUSE_THRESHOLD_KMH, clamped).apply()
         listeners.forEach { it.onSettingsChanged() }
     }
@@ -216,7 +216,7 @@ class FatigueDetectionManager private constructor(private val context: Context) 
             lastMovementTime = now
         } else if (!isMoving && wasMoving) {
             // Stopped moving - check if should auto-pause
-            handler.postDelayed(autoPauseCheck, 60000) // Check after 1 minute
+            handler.postDelayed(autoPauseCheck, MILLIS_PER_MINUTE)
         } else if (isMoving) {
             lastMovementTime = now
         }
@@ -264,7 +264,7 @@ class FatigueDetectionManager private constructor(private val context: Context) 
         pausedTimeMs = 0
         saveState()
         listeners.forEach { it.onDrivingPaused() }
-        Log.d(TAG, "Driving paused, total: ${totalDrivingTimeMs / 60000} min")
+        Log.d(TAG, "Driving paused, total: ${totalDrivingTimeMs / MILLIS_PER_MINUTE} min")
     }
 
     private fun resumeDriving() {
@@ -285,7 +285,7 @@ class FatigueDetectionManager private constructor(private val context: Context) 
         val threshold = getAutoPauseThresholdKmh()
 
         // If stopped for more than 1 minute and speed is below threshold
-        if (timeSinceMovement > 60000 && currentSpeedKmh < threshold) {
+        if (timeSinceMovement > MILLIS_PER_MINUTE && currentSpeedKmh < threshold) {
             pauseDriving()
         }
     }
@@ -294,7 +294,7 @@ class FatigueDetectionManager private constructor(private val context: Context) 
         if (drivingStartTime == 0L || isPaused) return
 
         val currentSessionTime = System.currentTimeMillis() - drivingStartTime
-        val totalMinutes = (totalDrivingTimeMs + currentSessionTime) / 60000
+        val totalMinutes = (totalDrivingTimeMs + currentSessionTime) / MILLIS_PER_MINUTE
         listeners.forEach { it.onDrivingTimeUpdate(totalMinutes.toInt()) }
     }
 
@@ -330,10 +330,12 @@ class FatigueDetectionManager private constructor(private val context: Context) 
     }
 
     private fun showBreakWarningDialog(minutesRemaining: Int) {
+        val msg = "You've been driving for ${getTotalDrivingMinutes()} minutes. " +
+            "Consider taking a break in $minutesRemaining minutes."
         handler.post {
             AlertDialog.Builder(context)
                 .setTitle("☕ Break Recommended")
-                .setMessage("You've been driving for ${getTotalDrivingMinutes()} minutes. Consider taking a break in $minutesRemaining minutes.")
+                .setMessage(msg)
                 .setPositiveButton("OK") { _, _ -> }
                 .setNegativeButton("Find Rest Stops") { _, _ -> findNearbyRestStops() }
                 .show()
@@ -341,10 +343,12 @@ class FatigueDetectionManager private constructor(private val context: Context) 
     }
 
     private fun showBreakRequiredDialog(totalMinutes: Int) {
+        val msg = "You have been driving for $totalMinutes minutes " +
+            "(${getBreakIntervalMinutes()} min limit). Please take a break now."
         handler.post {
             AlertDialog.Builder(context)
                 .setTitle("🛑 Break Required")
-                .setMessage("You have been driving for $totalMinutes minutes (${getBreakIntervalMinutes()} min limit). Please take a break now.")
+                .setMessage(msg)
                 .setPositiveButton("Take Break") { _, _ -> onBreakTaken() }
                 .setNegativeButton("Find Rest Stops") { _, _ -> findNearbyRestStops() }
                 .setNeutralButton("Continue (15 min)") { _, _ ->
@@ -381,13 +385,14 @@ class FatigueDetectionManager private constructor(private val context: Context) 
         val types = listOf(RestStop.RestStopType.REST_AREA, RestStop.RestStopType.GAS_STATION,
             RestStop.RestStopType.RESTAURANT, RestStop.RestStopType.PARKING)
 
-        for (i in 0..4) {
+        for (i in 0 until MOCK_REST_STOP_COUNT) {
             // Random offset within ~5-20 km
-            val distanceKm = (5 + Math.random() * 15).toDouble()
-            val bearing = Math.random() * 360
+            val distanceKm = (MOCK_MIN_DISTANCE_KM + Math.random() * MOCK_DISTANCE_RANGE_KM).toDouble()
+            val bearing = Math.random() * FULL_CIRCLE_DEGREES
 
-            val newLat = lat + (distanceKm / 111.0) * kotlin.math.cos(Math.toRadians(bearing))
-            val newLng = lng + (distanceKm / (111.0 * kotlin.math.cos(Math.toRadians(lat)))) * kotlin.math.sin(Math.toRadians(bearing))
+            val newLat = lat + (distanceKm / KM_PER_DEGREE_LATITUDE) * kotlin.math.cos(Math.toRadians(bearing))
+            val newLng = lng + (distanceKm / (KM_PER_DEGREE_LATITUDE * kotlin.math.cos(Math.toRadians(lat)))) *
+                kotlin.math.sin(Math.toRadians(bearing))
 
             stops.add(RestStop(
                 name = "${names[i % names.size]} ${i + 1}",
@@ -415,7 +420,7 @@ class FatigueDetectionManager private constructor(private val context: Context) 
 
     fun skipBreak() {
         // Add break interval to last break time to snooze
-        lastBreakTime = System.currentTimeMillis() - (getBreakIntervalMinutes() * 60000L)
+        lastBreakTime = System.currentTimeMillis() - (getBreakIntervalMinutes() * MILLIS_PER_MINUTE)
         breakAlertShown = false
         warningAlertShown = false
         saveState()
@@ -426,7 +431,7 @@ class FatigueDetectionManager private constructor(private val context: Context) 
         if (drivingStartTime > 0L && !isPaused) {
             total += System.currentTimeMillis() - drivingStartTime
         }
-        return (total / 60000).toInt()
+        return (total / MILLIS_PER_MINUTE).toInt()
     }
 
     fun getTotalDrivingTimeMs(): Long {
@@ -439,7 +444,7 @@ class FatigueDetectionManager private constructor(private val context: Context) 
 
     fun getTimeSinceLastBreakMinutes(): Int {
         if (lastBreakTime == 0L) return getTotalDrivingMinutes()
-        return ((System.currentTimeMillis() - lastBreakTime) / 60000).toInt()
+        return ((System.currentTimeMillis() - lastBreakTime) / MILLIS_PER_MINUTE).toInt()
     }
 
     fun isDriving(): Boolean = drivingStartTime > 0L && !isPaused
@@ -471,11 +476,11 @@ class FatigueDetectionManager private constructor(private val context: Context) 
                 if (isMonitoring) {
                     updateDrivingTime()
                     checkBreakWarnings()
-                    handler.postDelayed(this, 30000) // Update every 30 seconds
+                    handler.postDelayed(this, PERIODIC_UPDATE_INTERVAL_MS) // Update every 30 seconds
                 }
             }
         }
-        handler.postDelayed(updateRunnable, 30000)
+        handler.postDelayed(updateRunnable, PERIODIC_UPDATE_INTERVAL_MS)
     }
 
     fun cleanup() {

@@ -10,6 +10,19 @@ import kotlinx.coroutines.flow.first
  * Supports friend entries (manually added).
  */
 class LeaderboardManager(context: Context) {
+    companion object {
+        private const val METERS_PER_KILOMETER = 1000
+    }
+
+    data class UserStatsUpdate(
+        val totalDistanceMeters: Double,
+        val tracksRecorded: Int,
+        val bookmarksCreated: Int,
+        val achievementsUnlocked: Int,
+        val photoWaypoints: Int,
+        val challengesCompleted: Int
+    )
+
     private val dao = AppDatabase.getInstance(context).leaderboardDao()
 
     val allEntries: Flow<List<LeaderboardEntryEntity>> = dao.getAllEntries()
@@ -26,24 +39,19 @@ class LeaderboardManager(context: Context) {
      */
     suspend fun updateUserStats(
         playerName: String = "Neko",
-        totalDistanceMeters: Double,
-        tracksRecorded: Int,
-        bookmarksCreated: Int,
-        achievementsUnlocked: Int,
-        photoWaypoints: Int,
-        challengesCompleted: Int
+        stats: UserStatsUpdate
     ) {
         val existing = dao.getUserEntry()
         val entry = LeaderboardEntryEntity(
             id = existing?.id ?: 0,
             playerName = playerName,
             isUser = true,
-            totalDistanceMeters = totalDistanceMeters,
-            tracksRecorded = tracksRecorded,
-            bookmarksCreated = bookmarksCreated,
-            achievementsUnlocked = achievementsUnlocked,
-            photoWaypoints = photoWaypoints,
-            challengesCompleted = challengesCompleted
+            totalDistanceMeters = stats.totalDistanceMeters,
+            tracksRecorded = stats.tracksRecorded,
+            bookmarksCreated = stats.bookmarksCreated,
+            achievementsUnlocked = stats.achievementsUnlocked,
+            photoWaypoints = stats.photoWaypoints,
+            challengesCompleted = stats.challengesCompleted
         )
         if (existing != null) {
             dao.update(entry)
@@ -131,10 +139,10 @@ class LeaderboardManager(context: Context) {
      * Format distance for display.
      */
     fun getDistanceString(meters: Double): String {
-        return if (meters >= 1000) {
-            String.format("%.1f km", meters / 1000)
+        return if (meters >= METERS_PER_KILOMETER) {
+            String.format(java.util.Locale.getDefault(), "%.1f km", meters / METERS_PER_KILOMETER)
         } else {
-            String.format("%.0f m", meters)
+            String.format(java.util.Locale.getDefault(), "%.0f m", meters)
         }
     }
 }

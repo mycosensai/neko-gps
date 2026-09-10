@@ -52,97 +52,25 @@ import kotlin.math.sqrt
  * - Elevation profile view
  * - Traffic layer with congestion display
  */
-class MapsActivity : AppCompatActivity() {
-    private lateinit var mapView: MapView
-    private var locationOverlay: MyLocationNewOverlay? = null
-    private var compassOverlay: CompassOverlay? = null
-    private var scaleBarOverlay: ScaleBarOverlay? = null
+class MapsActivity : MapsFoundationActivity() {
     private var isTracking = false
     private val trackPoints = mutableListOf<GeoPoint>()
     private var trackPolyline: Polyline? = null
-    private var locationService: LocationTrackingService? = null
-    private var isBound = false
-
-    // Feature overlays
-    private var weatherOverlay: WeatherOverlay? = null
-    private var elevationProfileView: ElevationProfileView? = null
-    private var trafficOverlay: TrafficOverlay? = null
-    private var trafficLegend: TrafficLayer? = null
     private var trafficEnabled = false
-    private lateinit var speedCameraManager: SpeedCameraManager
-    private var lastCameraAlertId: String? = null
 
-    private val serviceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            val binder = service as LocationTrackingService.LocalBinder
-            locationService = binder.getService()
-            isBound = true
-            Toast.makeText(this@MapsActivity, "Service connected nya~", Toast.LENGTH_SHORT).show()
-        }
-        override fun onServiceDisconnected(name: ComponentName?) {
-            locationService = null
-            isBound = false
-        }
+    companion object {
+        private const val TRACK_LINE_WIDTH = 8f
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
-        
+
         setupMap()
         setupFeatureOverlays()
         setupControls()
         setupSpeedCameraAlerts()
         bindLocationService()
-    }
-
-    private fun setupMap() {
-        mapView = findViewById(R.id.mapView)
-        mapView.setTileSource(TileSourceFactory.MAPNIK)
-        mapView.setMultiTouchControls(true)
-        mapView.controller.setZoom(15.0)
-        mapView.minZoomLevel = 3.0
-        mapView.maxZoomLevel = 19.0
-        mapView.setHorizontalMapRepetitionEnabled(false)
-        mapView.setVerticalMapRepetitionEnabled(false)
-
-        // My location overlay
-        locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(this), mapView)
-        locationOverlay?.enableMyLocation()
-        locationOverlay?.enableFollowLocation()
-        locationOverlay?.setDrawAccuracyEnabled(true)
-        mapView.overlays.add(locationOverlay)
-
-        // Compass
-        compassOverlay = CompassOverlay(this, InternalCompassOrientationProvider(this), mapView)
-        compassOverlay?.enableCompass()
-        mapView.overlays.add(compassOverlay)
-
-        // Scale bar
-        scaleBarOverlay = ScaleBarOverlay(mapView)
-        scaleBarOverlay?.setAlignBottom(true)
-        scaleBarOverlay?.setAlignRight(true)
-        scaleBarOverlay?.setScaleBarOffset(50, 20)
-        mapView.overlays.add(scaleBarOverlay)
-
-        // Default position (will update with GPS)
-        mapView.controller.setCenter(GeoPoint(40.7128, -74.0060)) // NYC
-    }
-
-    private fun setupFeatureOverlays() {
-        // Weather overlay
-        weatherOverlay = WeatherOverlay(this)
-        val weatherContainer = findViewById<LinearLayout>(R.id.weatherContainer)
-        weatherContainer?.addView(weatherOverlay)
-
-        // Elevation profile view
-        elevationProfileView = ElevationProfileView(this)
-        val elevationContainer = findViewById<LinearLayout>(R.id.elevationContainer)
-        elevationContainer?.addView(elevationProfileView)
-
-        // Traffic overlay
-        trafficOverlay = TrafficOverlay(this)
-        trafficLegend = TrafficLayer(this)
     }
 
     private fun setupControls() {
@@ -173,7 +101,7 @@ class MapsActivity : AppCompatActivity() {
                 trackPoints.clear()
                 trackPolyline = Polyline(mapView).apply {
                     outlinePaint.color = Color.parseColor("#cbb7fb") // Lavender Glow
-                    outlinePaint.strokeWidth = 8f
+                    outlinePaint.strokeWidth = TRACK_LINE_WIDTH
                     title = "Recorded Track"
                 }
                 mapView.overlays.add(trackPolyline)
@@ -216,31 +144,6 @@ class MapsActivity : AppCompatActivity() {
             Toast.makeText(this, "Traffic layer OFF", Toast.LENGTH_SHORT).show()
         }
         mapView.invalidate()
-    }
-
-    private fun setupSpeedCameraAlerts() {
-        speedCameraManager = SpeedCameraManager.getInstance(this)
-        speedCameraManager.addListener(object : SpeedCameraManager.SpeedCameraListener {
-            override fun onCameraAlert(camera: SpeedCamera, distanceMeters: Double) {
-                if (lastCameraAlertId != camera.id) {
-                    lastCameraAlertId = camera.id
-                    runOnUiThread {
-                        val warningView = findViewById<android.widget.TextView>(R.id.tvSpeedCameraWarning)
-                        warningView.visibility = View.VISIBLE
-                        warningView.text = "⚠️ Speed camera in ${distanceMeters.toInt()}m - Limit: ${camera.speedLimitKmh} km/h"
-                    }
-                }
-            }
-
-            override fun onCameraPassed(camera: SpeedCamera) {
-                if (lastCameraAlertId == camera.id) {
-                    lastCameraAlertId = null
-                    runOnUiThread {
-                        findViewById<android.widget.TextView>(R.id.tvSpeedCameraWarning).visibility = View.GONE
-                    }
-                }
-            }
-        })
     }
 
     private fun updateElevationProfile() {
@@ -299,33 +202,5 @@ class MapsActivity : AppCompatActivity() {
             total += results[0]
         }
         return total
-    }
-
-    private fun bindLocationService() {
-        val intent = Intent(this, LocationTrackingService::class.java)
-        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        mapView.onResume()
-        locationOverlay?.enableMyLocation()
-        compassOverlay?.enableCompass()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        mapView.onPause()
-        locationOverlay?.disableMyLocation()
-        compassOverlay?.disableCompass()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        if (isBound) {
-            unbindService(serviceConnection)
-            isBound = false
-        }
-        weatherOverlay?.cleanup()
     }
 }

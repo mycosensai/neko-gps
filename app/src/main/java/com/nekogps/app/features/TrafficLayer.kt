@@ -25,6 +25,19 @@ class TrafficLayer @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
+    companion object {
+        private const val LEGEND_TEXT_SIZE = 24f
+        private const val LEGEND_TITLE_SIZE = 28f
+        private const val LEGEND_ITEM_HEIGHT = 40f
+        private const val LEGEND_PADDING = 20f
+        private const val LEGEND_BOX_SIZE = 24f
+        private const val LEGEND_TEXT_OFFSET = 40f
+        private const val LEGEND_WIDTH = 220f
+        private const val LEGEND_MARGIN = 30f
+        private const val LEGEND_CORNER_RADIUS = 16f
+        private const val LEGEND_BOX_INSET = 4
+    }
+
     private var showLegend = true
     private val legendItems = listOf(
         LegendItem("No Traffic", Color.parseColor("#4CAF50")),
@@ -41,12 +54,12 @@ class TrafficLayer @JvmOverloads constructor(
 
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#E9E5DD")
-        textSize = 24f
+        textSize = LEGEND_TEXT_SIZE
     }
 
     private val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#CBB7FB")
-        textSize = 28f
+        textSize = LEGEND_TITLE_SIZE
         isFakeBoldText = true
     }
 
@@ -61,20 +74,28 @@ class TrafficLayer @JvmOverloads constructor(
         super.onDraw(canvas)
         if (!showLegend) return
 
-        val itemHeight = 40f
-        val padding = 20f
-        val boxSize = 24f
-        val textOffset = 40f
+        val itemHeight = LEGEND_ITEM_HEIGHT
+        val padding = LEGEND_PADDING
+        val boxSize = LEGEND_BOX_SIZE
+        val textOffset = LEGEND_TEXT_OFFSET
 
-        val width = 220f
+        val width = LEGEND_WIDTH
         val height = padding * 2 + titlePaint.textSize + itemHeight * legendItems.size
 
         // Position in bottom-left corner
-        val left = 30f
-        val top = height - 30f - height
+        val left = LEGEND_MARGIN
+        val top = height - LEGEND_MARGIN - height
 
         // Draw background
-        canvas.drawRoundRect(left, top, left + width, top + height, 16f, 16f, backgroundPaint)
+        canvas.drawRoundRect(
+            left,
+            top,
+            left + width,
+            top + height,
+            LEGEND_CORNER_RADIUS,
+            LEGEND_CORNER_RADIUS,
+            backgroundPaint
+        )
 
         // Draw title
         canvas.drawText("Traffic", left + padding, top + padding + titlePaint.textSize, titlePaint)
@@ -83,7 +104,13 @@ class TrafficLayer @JvmOverloads constructor(
         var y = top + padding + titlePaint.textSize + itemHeight
         for (item in legendItems) {
             val boxPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = item.color }
-            canvas.drawRect(left + padding, y - boxSize + 4, left + padding + boxSize, y + 4, boxPaint)
+            canvas.drawRect(
+                left + padding,
+                y - boxSize + LEGEND_BOX_INSET,
+                left + padding + boxSize,
+                y + LEGEND_BOX_INSET,
+                boxPaint
+            )
             canvas.drawText(item.label, left + padding + textOffset, y, textPaint)
             y += itemHeight
         }
@@ -94,6 +121,17 @@ class TrafficLayer @JvmOverloads constructor(
  * Map overlay that renders traffic congestion polylines on the osmdroid map.
  */
 class TrafficOverlay(private val context: Context) : Overlay() {
+
+    companion object {
+        private const val SEGMENT_STROKE_WIDTH = 12f
+        private const val SEGMENT_ALPHA = 180
+        private const val SIMULATED_SEGMENT_COUNT = 8
+        private const val DEGREES_PER_SEGMENT = 45.0
+        private const val DEGREES_PER_HALF_CIRCLE = 180.0
+        private const val SIMULATED_POINT_LAST_INDEX = 5
+        private const val SIMULATED_FRACTION_DIVISOR = 5.0
+        private const val METERS_PER_DEGREE_LATITUDE = 111000.0
+    }
 
     private val trafficSegments = mutableListOf<TrafficSegment>()
 
@@ -115,11 +153,11 @@ class TrafficOverlay(private val context: Context) : Overlay() {
     private fun createPaint(color: Int): Paint {
         return Paint(Paint.ANTI_ALIAS_FLAG).apply {
             this.color = color
-            strokeWidth = 12f
+            strokeWidth = SEGMENT_STROKE_WIDTH
             style = Paint.Style.STROKE
             strokeCap = Paint.Cap.ROUND
             strokeJoin = Paint.Join.ROUND
-            alpha = 180
+            alpha = SEGMENT_ALPHA
         }
     }
 
@@ -176,14 +214,17 @@ class TrafficOverlay(private val context: Context) : Overlay() {
         val levels = CongestionLevel.values()
 
         // Generate some random road segments with traffic
-        for (i in 0 until 8) {
-            val angle = (i * 45.0) * Math.PI / 180.0
+        for (i in 0 until SIMULATED_SEGMENT_COUNT) {
+            val angle = (i * DEGREES_PER_SEGMENT) * Math.PI / DEGREES_PER_HALF_CIRCLE
             val points = mutableListOf<GeoPoint>()
 
-            for (j in 0..5) {
-                val dist = (j / 5.0) * radiusMeters
-                val lat = center.latitude + (dist / 111000.0) * kotlin.math.cos(angle)
-                val lng = center.longitude + (dist / (111000.0 * kotlin.math.cos(center.latitude * Math.PI / 180))) * kotlin.math.sin(angle)
+            for (j in 0..SIMULATED_POINT_LAST_INDEX) {
+                val dist = (j / SIMULATED_FRACTION_DIVISOR) * radiusMeters
+                val lat = center.latitude + (dist / METERS_PER_DEGREE_LATITUDE) *
+                    kotlin.math.cos(angle)
+                val lng = center.longitude + (dist / (METERS_PER_DEGREE_LATITUDE *
+                    kotlin.math.cos(center.latitude * Math.PI / DEGREES_PER_HALF_CIRCLE))) *
+                    kotlin.math.sin(angle)
                 points.add(GeoPoint(lat, lng))
             }
 

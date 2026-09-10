@@ -1,4 +1,4 @@
-package com.nekogps.app.features.bookmarks
+package com.nekogps.app.features.findmycar
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

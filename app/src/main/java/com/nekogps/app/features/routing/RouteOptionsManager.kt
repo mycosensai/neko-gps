@@ -20,23 +20,38 @@ class RouteOptionsManager(private val context: Context) {
         const val DEFAULT_AVOID_TOLLS = false
         const val DEFAULT_AVOID_HIGHWAYS = false
         const val DEFAULT_AVOID_FERRIES = false
+        private const val DEFAULT_TOLL_PENALTY_MULTIPLIER = 2.0
+        private const val DEFAULT_HIGHWAY_PENALTY_MULTIPLIER = 1.5
+        private const val DEFAULT_FERRY_PENALTY_MULTIPLIER = 3.0
     }
-    private val TOLL_PENALTY_MULTIPLIER = stringPreferencesKey("toll_penalty_multiplier")
-    private val HIGHWAY_PENALTY_MULTIPLIER = stringPreferencesKey("highway_penalty_multiplier")
-    private val FERRY_PENALTY_MULTIPLIER = stringPreferencesKey("ferry_penalty_multiplier")
+    private val tollPenaltyMultiplierKey = stringPreferencesKey("toll_penalty_multiplier")
+    private val highwayPenaltyMultiplierKey = stringPreferencesKey("highway_penalty_multiplier")
+    private val ferryPenaltyMultiplierKey = stringPreferencesKey("ferry_penalty_multiplier")
 
     val avoidTolls: Flow<Boolean> = context.dataStore.data.map { it[AVOID_TOLLS] ?: DEFAULT_AVOID_TOLLS }
     val avoidHighways: Flow<Boolean> = context.dataStore.data.map { it[AVOID_HIGHWAYS] ?: DEFAULT_AVOID_HIGHWAYS }
     val avoidFerries: Flow<Boolean> = context.dataStore.data.map { it[AVOID_FERRIES] ?: DEFAULT_AVOID_FERRIES }
-    val tollPenaltyMultiplier: Flow<Double> = context.dataStore.data.map { it[TOLL_PENALTY_MULTIPLIER]?.toDoubleOrNull() ?: 2.0 }
-    val highwayPenaltyMultiplier: Flow<Double> = context.dataStore.data.map { it[HIGHWAY_PENALTY_MULTIPLIER]?.toDoubleOrNull() ?: 1.5 }
-    val ferryPenaltyMultiplier: Flow<Double> = context.dataStore.data.map { it[FERRY_PENALTY_MULTIPLIER]?.toDoubleOrNull() ?: 3.0 }
+    val tollPenaltyMultiplier: Flow<Double> = context.dataStore.data.map {
+        it[tollPenaltyMultiplierKey]?.toDoubleOrNull() ?: DEFAULT_TOLL_PENALTY_MULTIPLIER
+    }
+    val highwayPenaltyMultiplier: Flow<Double> = context.dataStore.data.map {
+        it[highwayPenaltyMultiplierKey]?.toDoubleOrNull() ?: DEFAULT_HIGHWAY_PENALTY_MULTIPLIER
+    }
+    val ferryPenaltyMultiplier: Flow<Double> = context.dataStore.data.map {
+        it[ferryPenaltyMultiplierKey]?.toDoubleOrNull() ?: DEFAULT_FERRY_PENALTY_MULTIPLIER
+    }
 
     suspend fun setAvoidTolls(avoid: Boolean) { context.dataStore.edit { it[AVOID_TOLLS] = avoid } }
     suspend fun setAvoidHighways(avoid: Boolean) { context.dataStore.edit { it[AVOID_HIGHWAYS] = avoid } }
     suspend fun setAvoidFerries(avoid: Boolean) { context.dataStore.edit { it[AVOID_FERRIES] = avoid } }
     suspend fun setPenaltyMultiplier(type: AvoidanceType, multiplier: Double) {
-        context.dataStore.edit { when (type) { AvoidanceType.TOLLS -> it[TOLL_PENALTY_MULTIPLIER] = multiplier.toString(); AvoidanceType.HIGHWAYS -> it[HIGHWAY_PENALTY_MULTIPLIER] = multiplier.toString(); AvoidanceType.FERRIES -> it[FERRY_PENALTY_MULTIPLIER] = multiplier.toString() } }
+        context.dataStore.edit {
+            when (type) {
+                AvoidanceType.TOLLS -> it[tollPenaltyMultiplierKey] = multiplier.toString()
+                AvoidanceType.HIGHWAYS -> it[highwayPenaltyMultiplierKey] = multiplier.toString()
+                AvoidanceType.FERRIES -> it[ferryPenaltyMultiplierKey] = multiplier.toString()
+            }
+        }
     }
     suspend fun getPreferences(): RoutePreferences {
         val prefs = context.dataStore.data.first()
@@ -44,9 +59,12 @@ class RouteOptionsManager(private val context: Context) {
             avoidTolls = prefs[AVOID_TOLLS] ?: DEFAULT_AVOID_TOLLS,
             avoidHighways = prefs[AVOID_HIGHWAYS] ?: DEFAULT_AVOID_HIGHWAYS,
             avoidFerries = prefs[AVOID_FERRIES] ?: DEFAULT_AVOID_FERRIES,
-            tollPenaltyMultiplier = prefs[TOLL_PENALTY_MULTIPLIER]?.toDoubleOrNull() ?: 2.0,
-            highwayPenaltyMultiplier = prefs[HIGHWAY_PENALTY_MULTIPLIER]?.toDoubleOrNull() ?: 1.5,
-            ferryPenaltyMultiplier = prefs[FERRY_PENALTY_MULTIPLIER]?.toDoubleOrNull() ?: 3.0
+            tollPenaltyMultiplier = prefs[tollPenaltyMultiplierKey]?.toDoubleOrNull()
+                ?: DEFAULT_TOLL_PENALTY_MULTIPLIER,
+            highwayPenaltyMultiplier = prefs[highwayPenaltyMultiplierKey]?.toDoubleOrNull()
+                ?: DEFAULT_HIGHWAY_PENALTY_MULTIPLIER,
+            ferryPenaltyMultiplier = prefs[ferryPenaltyMultiplierKey]?.toDoubleOrNull()
+                ?: DEFAULT_FERRY_PENALTY_MULTIPLIER
         )
     }
     suspend fun resetToDefaults() {
@@ -54,12 +72,17 @@ class RouteOptionsManager(private val context: Context) {
             it[AVOID_TOLLS] = DEFAULT_AVOID_TOLLS
             it[AVOID_HIGHWAYS] = DEFAULT_AVOID_HIGHWAYS
             it[AVOID_FERRIES] = DEFAULT_AVOID_FERRIES
-            it[TOLL_PENALTY_MULTIPLIER] = "2.0"
-            it[HIGHWAY_PENALTY_MULTIPLIER] = "1.5"
-            it[FERRY_PENALTY_MULTIPLIER] = "3.0"
+            it[tollPenaltyMultiplierKey] = DEFAULT_TOLL_PENALTY_MULTIPLIER.toString()
+            it[highwayPenaltyMultiplierKey] = DEFAULT_HIGHWAY_PENALTY_MULTIPLIER.toString()
+            it[ferryPenaltyMultiplierKey] = DEFAULT_FERRY_PENALTY_MULTIPLIER.toString()
         }
     }
-    suspend fun calculatePenalizedDistance(segmentDistance: Double, hasToll: Boolean, hasHighway: Boolean, hasFerry: Boolean): Double {
+    suspend fun calculatePenalizedDistance(
+        segmentDistance: Double,
+        hasToll: Boolean,
+        hasHighway: Boolean,
+        hasFerry: Boolean
+    ): Double {
         val prefs = getPreferences()
         var penalty = 1.0
         if (prefs.avoidTolls && hasToll) penalty *= prefs.tollPenaltyMultiplier
@@ -80,8 +103,12 @@ class RouteOptionsManager(private val context: Context) {
 }
 
 data class RoutePreferences(
-    val avoidTolls: Boolean = false, val avoidHighways: Boolean = false, val avoidFerries: Boolean = false,
-    val tollPenaltyMultiplier: Double = 2.0, val highwayPenaltyMultiplier: Double = 1.5, val ferryPenaltyMultiplier: Double = 3.0
+    val avoidTolls: Boolean = false,
+    val avoidHighways: Boolean = false,
+    val avoidFerries: Boolean = false,
+    val tollPenaltyMultiplier: Double = 2.0,
+    val highwayPenaltyMultiplier: Double = 1.5,
+    val ferryPenaltyMultiplier: Double = 3.0
 ) {
     fun getActiveAvoidances(): List<String> {
         val list = mutableListOf<String>()

@@ -33,17 +33,12 @@ enum class CameraType {
  * Stores camera locations in SharedPreferences and provides
  * visual + audio alerts when approaching cameras.
  */
-class SpeedCameraManager private constructor(private val context: Context) {
+class SpeedCameraManager private constructor(context: Context) : SpeedCameraStore(context) {
 
-    private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    private val gson = Gson()
     private val listeners = mutableListOf<SpeedCameraListener>()
 
     companion object {
-        private const val PREFS_NAME = "speed_cameras"
-        private const val KEY_CAMERAS = "cameras"
-        private const val KEY_ALERT_DISTANCE = "alert_distance"
-        private const val DEFAULT_ALERT_DISTANCE_METERS = 500.0
+        private const val PASSED_CAMERA_DISTANCE_FACTOR = 1.5
 
         @Volatile
         private var instance: SpeedCameraManager? = null
@@ -82,56 +77,10 @@ class SpeedCameraManager private constructor(private val context: Context) {
     }
 
     /**
-     * Get all stored speed cameras.
-     */
-    fun getCameras(): List<SpeedCamera> {
-        val json = prefs.getString(KEY_CAMERAS, null) ?: return emptyList()
-        val type = object : TypeToken<List<SpeedCamera>>() {}.type
-        return try {
-            gson.fromJson(json, type) ?: emptyList()
-        } catch (e: Exception) {
-            Log.w("SpeedCameraManager", "getCameras: suppressed Exception", e)
-            emptyList()
-        }
-    }
-
-    /**
-     * Add a new speed camera.
-     */
-    fun addCamera(camera: SpeedCamera) {
-        val cameras = getCameras().toMutableList()
-        cameras.add(camera)
-        saveCameras(cameras)
-    }
-
-    /**
-     * Remove a speed camera by ID.
-     */
-    fun removeCamera(cameraId: String) {
-        val cameras = getCameras().toMutableList()
-        cameras.removeAll { it.id == cameraId }
-        saveCameras(cameras)
-    }
-
-    /**
-     * Get the alert distance threshold in meters.
-     */
-    fun getAlertDistance(): Double {
-        return prefs.getFloat(KEY_ALERT_DISTANCE, DEFAULT_ALERT_DISTANCE_METERS.toFloat()).toDouble()
-    }
-
-    /**
-     * Set the alert distance threshold in meters.
-     */
-    fun setAlertDistance(meters: Double) {
-        prefs.edit().putFloat(KEY_ALERT_DISTANCE, meters.toFloat()).apply()
-    }
-
-    /**
      * Check proximity to speed cameras and trigger alerts.
      * Call this when location updates.
      */
-    fun checkProximity(currentLocation: GeoPoint, currentSpeedKmh: Double = 0.0) {
+    fun checkProximity(currentLocation: GeoPoint) {
         val cameras = getCameras()
         val alertDistance = getAlertDistance()
 
@@ -144,7 +93,7 @@ class SpeedCameraManager private constructor(private val context: Context) {
             if (distance <= alertDistance) {
                 // Trigger alert
                 listeners.forEach { it.onCameraAlert(camera, distance) }
-            } else if (distance > alertDistance * 1.5) {
+            } else if (distance > alertDistance * PASSED_CAMERA_DISTANCE_FACTOR) {
                 // Camera passed
                 listeners.forEach { it.onCameraPassed(camera) }
             }
@@ -217,40 +166,4 @@ class SpeedCameraManager private constructor(private val context: Context) {
 
         return nearest?.speedLimitKmh
     }
-
-    private fun saveCameras(cameras: List<SpeedCamera>) {
-        val json = gson.toJson(cameras)
-        prefs.edit().putString(KEY_CAMERAS, json).apply()
-    }
-
-    /**
-     * Initialize with sample speed camera locations.
-     * In production, this would load from a database or API.
-     */
-    private fun initializeDefaultCameras() {
-        val defaultCameras = listOf(
-            // Sample cameras - replace with real data
-            SpeedCamera("cam_001", 40.7580, -73.9855, CameraType.FIXED, 50, "Times Square - Fixed Camera"),
-            SpeedCamera("cam_002", 40.7484, -73.9857, CameraType.RED_LIGHT, 50, "Empire State - Red Light"),
-            SpeedCamera("cam_003", 40.7614, -73.9776, CameraType.MOBILE, 40, "5th Ave - Mobile Zone"),
-            SpeedCamera("cam_004", 40.7527, -73.9772, CameraType.AVERAGE_SPEED, 40, "Park Ave - Average Speed"),
-            SpeedCamera("cam_005", 40.7061, -74.0087, CameraType.FIXED, 30, "Financial District - Fixed"),
-            SpeedCamera("cam_006", 40.7282, -73.9942, CameraType.TRAFFIC_LIGHT, 40, "Union Square - Traffic Light"),
-            SpeedCamera("cam_007", 40.7411, -73.9897, CameraType.FIXED, 35, "Flatiron - Fixed Camera"),
-            SpeedCamera("cam_008", 40.7589, -73.9851, CameraType.MOBILE, 50, "Broadway - Mobile Zone")
-        )
-        saveCameras(defaultCameras)
-    }
-
-    /**
-     * Clear all stored cameras.
-     */
-    fun clearAllCameras() {
-        prefs.edit().remove(KEY_CAMERAS).apply()
-    }
-
-    /**
-     * Get camera count.
-     */
-    fun getCameraCount(): Int = getCameras().size
 }

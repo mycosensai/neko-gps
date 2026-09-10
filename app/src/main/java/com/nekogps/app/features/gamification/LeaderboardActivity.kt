@@ -66,8 +66,12 @@ class LeaderboardActivity : AppCompatActivity() {
     private fun showAddFriendDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_add_friend, null)
         val etName = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etFriendName)
-        val etDistance = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etFriendDistance)
-        val etTracks = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etFriendTracks)
+        val etDistance = dialogView.findViewById<
+            com.google.android.material.textfield.TextInputEditText
+            >(R.id.etFriendDistance)
+        val etTracks = dialogView.findViewById<
+            com.google.android.material.textfield.TextInputEditText
+            >(R.id.etFriendTracks)
 
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setTitle("Add Friend")

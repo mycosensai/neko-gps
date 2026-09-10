@@ -35,7 +35,7 @@ class NightModeManager(private val context: Context) {
             }
         }
 
-        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
     }
 
     fun isNightModeEnabled(): Boolean = isNightMode
@@ -60,7 +60,6 @@ class NightModeManager(private val context: Context) {
      */
     fun isNightTime(
         latitude: Double,
-        longitude: Double,
         timeInMillis: Long = System.currentTimeMillis()
     ): Boolean {
         val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
@@ -71,36 +70,10 @@ class NightModeManager(private val context: Context) {
 
         // Simplified sunrise/sunset calculation
         // Varies by latitude and season
-        val sunriseHour = calculateSunrise(latitude, month)
-        val sunsetHour = calculateSunset(latitude, month)
+        val sunriseHour = SunTimeCalculator.calculateSunrise(latitude, month)
+        val sunsetHour = SunTimeCalculator.calculateSunset(latitude, month)
 
         return hour < sunriseHour || hour >= sunsetHour
-    }
-
-    private fun calculateSunrise(latitude: Double, month: Int): Int {
-        // Simplified: sunrise between 5-8 AM depending on latitude and season
-        val baseSunrise = 6
-        val latOffset = (abs(latitude) / 30).toInt().coerceAtMost(2)
-        val seasonalOffset = when (month) {
-            in 3..5 -> -1 // Spring: earlier sunrise
-            in 6..8 -> -2 // Summer: earliest sunrise
-            in 9..11 -> 0 // Fall: normal
-            else -> 1 // Winter: later sunrise
-        }
-        return (baseSunrise + latOffset + seasonalOffset).coerceIn(4, 9)
-    }
-
-    private fun calculateSunset(latitude: Double, month: Int): Int {
-        // Simplified: sunset between 5-9 PM depending on latitude and season
-        val baseSunset = 18
-        val latOffset = (abs(latitude) / 30).toInt().coerceAtMost(2)
-        val seasonalOffset = when (month) {
-            in 3..5 -> 1 // Spring: later sunset
-            in 6..8 -> 2 // Summer: latest sunset
-            in 9..11 -> 0 // Fall: normal
-            else -> -1 // Winter: earlier sunset
-        }
-        return (baseSunset + latOffset + seasonalOffset).coerceIn(16, 22)
     }
 
     /**
@@ -156,7 +129,11 @@ class NightModeManager(private val context: Context) {
 class NightTileSource {
     val tileSourceName = "Night Mode"
     val requiresDarkOverlay = true
-    val overlayAlpha = 0.5f
+    val overlayAlpha = DEFAULT_OVERLAY_ALPHA
+
+    companion object {
+        private const val DEFAULT_OVERLAY_ALPHA = 0.5f
+    }
 }
 
 /**

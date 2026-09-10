@@ -46,10 +46,12 @@ class ChallengeAdapter(
             description.text = challenge.description
 
             val percent = if (challenge.targetValue > 0) {
-                (challenge.currentValue / challenge.targetValue * 100).toInt().coerceIn(0, 100)
+                (challenge.currentValue / challenge.targetValue * MAX_PROGRESS_PERCENT)
+                    .toInt()
+                    .coerceIn(0, MAX_PROGRESS_PERCENT)
             } else 0
 
-            progressBar.max = 100
+            progressBar.max = MAX_PROGRESS_PERCENT
             progressBar.progress = percent
             progressText.text = "${challenge.currentValue.toInt()} / ${challenge.targetValue.toInt()} ($percent%)"
 
@@ -69,6 +71,7 @@ class ChallengeAdapter(
     }
 
     companion object {
+        private const val MAX_PROGRESS_PERCENT = 100
         private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<LocationChallengeEntity>() {
             override fun areItemsTheSame(oldItem: LocationChallengeEntity, newItem: LocationChallengeEntity) =
                 oldItem.challengeKey == newItem.challengeKey

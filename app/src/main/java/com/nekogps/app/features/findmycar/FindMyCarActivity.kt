@@ -1,22 +1,19 @@
 package com.nekogps.app.features.findmycar
 
-import android.app.Activity
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.nekogps.app.MapsActivity
 import com.nekogps.app.R
-import com.nekogps.app.features.bookmarks.ParkingLocation
+import com.nekogps.app.features.findmycar.ParkingLocation
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -39,14 +36,6 @@ class FindMyCarActivity : AppCompatActivity() {
 
     private var currentParking: ParkingLocation? = null
     private var photoPath: String = ""
-
-    private val takePictureLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            Toast.makeText(this, "Photo saved nya~", Toast.LENGTH_SHORT).show()
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -100,7 +89,7 @@ class FindMyCarActivity : AppCompatActivity() {
         // Calculate walking distance and time (using 0,0 as placeholder - real location from GPS)
         val distance = findMyCar.getWalkingDistance(0.0, 0.0, parking)
         val walkTime = findMyCar.getWalkingTimeMinutes(distance)
-        tvWalkingDistance.text = String.format("Distance: %.0f m", distance)
+        tvWalkingDistance.text = String.format(java.util.Locale.getDefault(), "Distance: %.0f m", distance)
         tvWalkingTime.text = "Walking: ~$walkTime min"
 
         // Load photo if exists
@@ -134,9 +123,11 @@ class FindMyCarActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             findMyCar.saveParkingLocation(
-                latitude = lat,
-                longitude = lon,
-                note = "Saved from Find My Car"
+                FindMyCar.ParkingDetails(
+                    latitude = lat,
+                    longitude = lon,
+                    note = "Saved from Find My Car"
+                )
             )
             Toast.makeText(this@FindMyCarActivity, "Parking saved nya~", Toast.LENGTH_SHORT).show()
         }
@@ -156,13 +147,6 @@ class FindMyCarActivity : AppCompatActivity() {
         lifecycleScope.launch {
             findMyCar.clearParking()
             Toast.makeText(this@FindMyCarActivity, "Parking cleared nya~", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun takePhotoPhoto() {
-        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        if (intent.resolveActivity(packageManager) != null) {
-            takePictureLauncher.launch(intent)
         }
     }
 }

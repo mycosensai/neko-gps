@@ -16,6 +16,7 @@ class RouteHistoryManager(private val context: Context) {
     companion object {
         private const val KEY_ROUTES = "saved_routes"
         private const val KEY_COUNT = "route_count"
+        private const val METERS_PER_KILOMETER = 1000
     }
 
     fun saveRoute(routeName: String, points: List<RoutePoint>) {
@@ -57,6 +58,10 @@ class RouteHistoryManager(private val context: Context) {
     }
 
     fun formatDistance(meters: Float): String {
-        return if (meters >= 1000) "%.1f km".format(meters / 1000) else "%.0f m".format(meters)
+        return if (meters >= METERS_PER_KILOMETER) {
+            "%.1f km".format(meters / METERS_PER_KILOMETER)
+        } else {
+            "%.0f m".format(meters)
+        }
     }
 }

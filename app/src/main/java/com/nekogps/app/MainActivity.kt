@@ -14,7 +14,10 @@ import com.nekogps.app.features.safety.SafetyActivity
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-    private val LOCATION_PERMISSION_REQUEST = 1001
+
+    companion object {
+        private const val LOCATION_PERMISSION_REQUEST = 1001
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

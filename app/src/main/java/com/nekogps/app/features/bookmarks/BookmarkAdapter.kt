@@ -37,7 +37,12 @@ class BookmarkAdapter(
             tvName.text = bookmark.name
             tvDescription.text = bookmark.description.ifEmpty { bookmark.address.ifEmpty { "No description" } }
             tvCategory.text = "${bookmark.category.emoji} ${bookmark.category.displayName}"
-            tvCoordinates.text = String.format("%.5f, %.5f", bookmark.latitude, bookmark.longitude)
+            tvCoordinates.text = String.format(
+                java.util.Locale.getDefault(),
+                "%.5f, %.5f",
+                bookmark.latitude,
+                bookmark.longitude
+            )
 
             btnNavigate.setOnClickListener { onNavigateClick(bookmark) }
             btnDelete.setOnClickListener { onDeleteClick(bookmark) }

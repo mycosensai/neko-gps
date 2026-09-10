@@ -22,13 +22,17 @@ import kotlin.concurrent.thread
  * Manages offline map tiles using osmdroid's tile caching system.
  * Handles tile downloading, storage management, and offline availability checks.
  */
-class OfflineMapManager(private val context: Context) {
+class OfflineMapManager(context: Context) : OfflineMapCache(context) {
 
     companion object {
         private const val TAG = "OfflineMapManager"
         private const val MIN_STORAGE_MB = 50L
         private const val TILE_DOWNLOAD_BATCH_SIZE = 20
-        private const val MAP_CACHE_DIR = "osmdroid/tiles"
+        private const val BYTES_PER_MEGABYTE = 1_048_576L
+        private const val TILE_SERVER_POLITENESS_DELAY_MS = 50L
+        private const val CONNECT_TIMEOUT_MS = 10000
+        private const val READ_TIMEOUT_MS = 10000
+        private const val CACHE_TRIM_RATIO = 0.8
     }
 
     private val tileWriter = TileWriter()
@@ -58,15 +62,6 @@ class OfflineMapManager(private val context: Context) {
     )
 
     /**
-     * Get the offline map cache directory.
-     */
-    fun getCacheDir(): File {
-        val dir = File(context.getExternalFilesDir(null), MAP_CACHE_DIR)
-        if (!dir.exists()) dir.mkdirs()
-        return dir
-    }
-
-    /**
      * Get current storage information.
      */
     fun getStorageInfo(): StorageInfo {
@@ -92,7 +87,7 @@ class OfflineMapManager(private val context: Context) {
      */
     fun hasEnoughStorage(requiredMb: Long = MIN_STORAGE_MB): Boolean {
         val statFs = StatFs(getCacheDir().path)
-        val availableMb = statFs.availableBytes / (1024 * 1024)
+        val availableMb = statFs.availableBytes / BYTES_PER_MEGABYTE
         return availableMb >= requiredMb
     }
 
@@ -101,7 +96,7 @@ class OfflineMapManager(private val context: Context) {
      */
     fun getAvailableStorageMb(): Long {
         val statFs = StatFs(getCacheDir().path)
-        return statFs.availableBytes / (1024 * 1024)
+        return statFs.availableBytes / BYTES_PER_MEGABYTE
     }
 
     /**
@@ -150,9 +145,9 @@ class OfflineMapManager(private val context: Context) {
                                 }
 
                                 // Small delay to be respectful to tile servers
-                                Thread.sleep(50)
+                                Thread.sleep(TILE_SERVER_POLITENESS_DELAY_MS)
                             } catch (e: IOException) {
-                                Log.w(TAG, "Failed to download tile $zoom/$x/$y: ${e.message}")
+                                Log.w(TAG, "Failed to download tile $zoom/$x/$y", e)
                             }
                         }
                     }
@@ -170,8 +165,14 @@ class OfflineMapManager(private val context: Context) {
                 onProgress(finalProgress)
                 onComplete(true, null)
 
-            } catch (e: Exception) {
-                Log.e(TAG, "Download failed", e)
+            } catch (e: InterruptedException) {
+                Log.w(TAG, "Download failed", e)
+                onComplete(false, e.message)
+            } catch (e: IOException) {
+                Log.w(TAG, "Download failed", e)
+                onComplete(false, e.message)
+            } catch (e: IllegalStateException) {
+                Log.w(TAG, "Download failed", e)
                 onComplete(false, e.message)
             }
         }
@@ -186,8 +187,8 @@ class OfflineMapManager(private val context: Context) {
         val connection = url.openConnection() as HttpURLConnection
         connection.requestMethod = "GET"
         connection.setRequestProperty("User-Agent", "NekoGPS/1.0")
-        connection.connectTimeout = 10000
-        connection.readTimeout = 10000
+        connection.connectTimeout = CONNECT_TIMEOUT_MS
+        connection.readTimeout = READ_TIMEOUT_MS
 
         if (connection.responseCode == HttpURLConnection.HTTP_OK) {
             val tileFile = File(getCacheDir(), "${tileSource.name()}/$zoom/$x/$y.png")
@@ -200,37 +201,6 @@ class OfflineMapManager(private val context: Context) {
             }
         }
         connection.disconnect()
-    }
-
-    /**
-     * Get tile URL from the tile source.
-     */
-    private fun getTileUrl(zoom: Int, x: Int, y: Int): String {
-        return "https://tile.openstreetmap.org/$zoom/$x/$y.png"
-    }
-
-    /**
-     * Calculate the number of tiles in a region across zoom levels.
-     */
-    private fun calculateTileCount(boundingBox: BoundingBox, minZoom: Int, maxZoom: Int): Int {
-        var count = 0
-        for (zoom in minZoom..maxZoom) {
-            val minTile = getTileNumber(boundingBox.latNorth, boundingBox.lonWest, zoom)
-            val maxTile = getTileNumber(boundingBox.latSouth, boundingBox.lonEast, zoom)
-            val tilesX = maxTile.first - minTile.first + 1
-            val tilesY = maxTile.second - minTile.second + 1
-            count += tilesX * tilesY
-        }
-        return count
-    }
-
-    /**
-     * Convert lat/lon to tile numbers at a given zoom level.
-     */
-    private fun getTileNumber(lat: Double, lon: Double, zoom: Int): Pair<Int, Int> {
-        val x = ((lon + 180.0) / 360.0 * (1 shl zoom)).toInt()
-        val y = ((1.0 - Math.log(Math.tan(Math.toRadians(lat)) + 1.0 / Math.cos(Math.toRadians(lat))) / Math.PI) / 2.0 * (1 shl zoom)).toInt()
-        return Pair(x, y)
     }
 
     /**
@@ -258,8 +228,11 @@ class OfflineMapManager(private val context: Context) {
             cacheDir.deleteRecursively()
             cacheDir.mkdirs()
             true
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to clear cache", e)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Failed to clear cache", e)
+            false
+        } catch (e: IllegalStateException) {
+            Log.w(TAG, "Failed to clear cache", e)
             false
         }
     }
@@ -272,26 +245,13 @@ class OfflineMapManager(private val context: Context) {
     }
 
     /**
-     * Format bytes to human-readable string.
-     */
-    private fun formatBytes(bytes: Long): String {
-        val units = arrayOf("B", "KB", "MB", "GB", "TB")
-        var size = bytes.toDouble()
-        var unitIndex = 0
-        while (size >= 1024 && unitIndex < units.size - 1) {
-            size /= 1024
-            unitIndex++
-        }
-        return String.format("%.2f %s", size, units[unitIndex])
-    }
-
-    /**
      * Set the maximum cache size for osmdroid.
      */
     fun setMaxCacheSize(maxBytes: Long) {
         Configuration.getInstance().osmdroidTileCache = getCacheDir()
         Configuration.getInstance().tileFileSystemCacheMaxBytes = maxBytes
-        Configuration.getInstance().tileFileSystemCacheTrimBytes = (maxBytes * 0.8).toLong()
+        Configuration.getInstance().tileFileSystemCacheTrimBytes = (maxBytes * CACHE_TRIM_RATIO)
+            .toLong()
     }
 
     /**
@@ -303,8 +263,11 @@ class OfflineMapManager(private val context: Context) {
             val tileCount = archives.getTileSources().size
             Log.d(TAG, "Imported archive with $tileCount tile sources")
             true
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to import archive", e)
+        } catch (e: IOException) {
+            Log.w(TAG, "Failed to import archive", e)
+            false
+        } catch (e: IllegalArgumentException) {
+            Log.w(TAG, "Failed to import archive", e)
             false
         }
     }

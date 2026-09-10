@@ -43,9 +43,9 @@ class LeaderboardAdapter(
 
             // Set rank icon
             when {
-                rank == 1 -> rankIcon.text = "🥇"
-                rank == 2 -> rankIcon.text = "🥈"
-                rank == 3 -> rankIcon.text = "🥉"
+                rank == RANK_FIRST_PLACE -> rankIcon.text = "🥇"
+                rank == RANK_SECOND_PLACE -> rankIcon.text = "🥈"
+                rank == RANK_THIRD_PLACE -> rankIcon.text = "🥉"
                 else -> rankIcon.text = rank.toString()
             }
 
@@ -60,14 +60,18 @@ class LeaderboardAdapter(
     }
 
     private fun formatDistance(meters: Double): String {
-        return if (meters >= 1000) {
-            String.format("%.1f km", meters / 1000)
+        return if (meters >= METERS_PER_KILOMETER) {
+            String.format(java.util.Locale.getDefault(), "%.1f km", meters / METERS_PER_KILOMETER)
         } else {
-            String.format("%.0f m", meters)
+            String.format(java.util.Locale.getDefault(), "%.0f m", meters)
         }
     }
 
     companion object {
+        private const val METERS_PER_KILOMETER = 1000
+        private const val RANK_FIRST_PLACE = 1
+        private const val RANK_SECOND_PLACE = 2
+        private const val RANK_THIRD_PLACE = 3
         private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<LeaderboardEntryEntity>() {
             override fun areItemsTheSame(oldItem: LeaderboardEntryEntity, newItem: LeaderboardEntryEntity) =
                 oldItem.id == newItem.id

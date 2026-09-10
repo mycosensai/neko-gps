@@ -25,6 +25,7 @@ class WidgetProvider : AppWidgetProvider() {
         private const val KEY_NEXT = "next_turn"
 
         const val ACTION_REFRESH = "com.nekogps.app.features.ui.WIDGET_REFRESH"
+        private const val MINUTES_PER_HOUR = 60
 
         fun pushNavState(
             context: Context,
@@ -55,8 +56,8 @@ class WidgetProvider : AppWidgetProvider() {
 
         fun formatEta(etaMinutes: Long): String {
             if (etaMinutes <= 0) return "Arrived"
-            val h = etaMinutes / 60
-            val m = etaMinutes % 60
+            val h = etaMinutes / MINUTES_PER_HOUR
+            val m = etaMinutes % MINUTES_PER_HOUR
             return if (h > 0) String.format(Locale.US, "%dh %02dm", h, m)
             else String.format(Locale.US, "%d min", m)
         }

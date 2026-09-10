@@ -2,7 +2,7 @@ package com.nekogps.app.features.findmycar
 
 import android.content.Context
 import com.nekogps.app.features.bookmarks.AppDatabase
-import com.nekogps.app.features.bookmarks.ParkingLocation
+import com.nekogps.app.features.findmycar.ParkingLocation
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -12,28 +12,41 @@ import kotlinx.coroutines.flow.Flow
 class FindMyCar(context: Context) {
     private val dao = AppDatabase.getInstance(context).parkingDao()
 
+    companion object {
+        private const val MILLIS_PER_MINUTE = 60000L
+        private const val MINUTES_PER_HOUR = 60L
+        private const val HOURS_PER_DAY = 24L
+        private const val WALKING_SPEED_METERS_PER_SECOND = 1.39f
+        private const val SECONDS_PER_MINUTE = 60
+    }
+
     val latestParking: Flow<ParkingLocation?> = dao.getLatestParking()
     val allParking: Flow<List<ParkingLocation>> = dao.getAllParking()
 
-    suspend fun saveParkingLocation(
-        latitude: Double,
-        longitude: Double,
-        address: String = "",
-        note: String = "",
-        photoPath: String = "",
-        level: String = "",
-        spotNumber: String = ""
-    ): Long {
+    /**
+     * Input for saving a parking location, grouping the fields of [saveParkingLocation].
+     */
+    data class ParkingDetails(
+        val latitude: Double,
+        val longitude: Double,
+        val address: String = "",
+        val note: String = "",
+        val photoPath: String = "",
+        val level: String = "",
+        val spotNumber: String = ""
+    )
+
+    suspend fun saveParkingLocation(details: ParkingDetails): Long {
         // Clear previous parking before saving new one
         dao.deleteAll()
         val parking = ParkingLocation(
-            latitude = latitude,
-            longitude = longitude,
-            address = address,
-            note = note,
-            photoPath = photoPath,
-            level = level,
-            spotNumber = spotNumber,
+            latitude = details.latitude,
+            longitude = details.longitude,
+            address = details.address,
+            note = details.note,
+            photoPath = details.photoPath,
+            level = details.level,
+            spotNumber = details.spotNumber,
             parkedAt = System.currentTimeMillis()
         )
         return dao.insert(parking)
@@ -53,13 +66,13 @@ class FindMyCar(context: Context) {
 
     fun getParkingTimeElapsed(parkedAt: Long): String {
         val elapsed = System.currentTimeMillis() - parkedAt
-        val minutes = elapsed / 60000
-        val hours = minutes / 60
-        val days = hours / 24
+        val minutes = elapsed / MILLIS_PER_MINUTE
+        val hours = minutes / MINUTES_PER_HOUR
+        val days = hours / HOURS_PER_DAY
 
         return when {
-            days > 0 -> "${days}d ${hours % 24}h ago"
-            hours > 0 -> "${hours}h ${minutes % 60}m ago"
+            days > 0 -> "${days}d ${hours % HOURS_PER_DAY}h ago"
+            hours > 0 -> "${hours}h ${minutes % MINUTES_PER_HOUR}m ago"
             minutes > 0 -> "${minutes}m ago"
             else -> "Just now"
         }
@@ -77,6 +90,7 @@ class FindMyCar(context: Context) {
 
     fun getWalkingTimeMinutes(distanceMeters: Float): Int {
         // Average walking speed ~5 km/h = 1.39 m/s
-        return (distanceMeters / 1.39f / 60).toInt().coerceAtLeast(1)
+        return (distanceMeters / WALKING_SPEED_METERS_PER_SECOND / SECONDS_PER_MINUTE)
+            .toInt().coerceAtLeast(1)
     }
 }

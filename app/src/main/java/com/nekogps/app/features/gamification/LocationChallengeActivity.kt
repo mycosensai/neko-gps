@@ -17,6 +17,10 @@ import kotlinx.coroutines.launch
  * Shows active challenges and completed ones with progress tracking.
  */
 class LocationChallengeActivity : AppCompatActivity() {
+    companion object {
+        private const val PROGRESS_INCREMENT_DIVISOR = 10
+    }
+
     private lateinit var challengeManager: LocationChallengeManager
     private lateinit var adapter: ChallengeAdapter
     private lateinit var recyclerView: RecyclerView
@@ -63,7 +67,7 @@ class LocationChallengeActivity : AppCompatActivity() {
 
     private fun updateProgress(challenge: LocationChallengeEntity) {
         // Increment progress by target/10 for demo purposes
-        val increment = challenge.targetValue / 10
+        val increment = challenge.targetValue / PROGRESS_INCREMENT_DIVISOR
         lifecycleScope.launch {
             val newProgress = challenge.currentValue + increment
             val completed = challengeManager.updateProgress(challenge.challengeKey, newProgress)

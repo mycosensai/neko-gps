@@ -12,7 +12,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
 import com.nekogps.app.R
-import com.nekogps.app.features.bookmarks.WaypointEntity
+import com.nekogps.app.features.waypoints.WaypointEntity
 import kotlinx.coroutines.launch
 
 /**

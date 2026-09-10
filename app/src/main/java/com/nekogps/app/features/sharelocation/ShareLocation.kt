@@ -1,9 +1,11 @@
 package com.nekogps.app.features.sharelocation
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.location.Geocoder
+import java.io.IOException
 import java.util.Locale
 import android.util.Log
 
@@ -11,26 +13,14 @@ import android.util.Log
  * ShareLocation - share current location via SMS, email, or messaging apps.
  * Generates Google Maps link with coordinates and address.
  */
-class ShareLocation(private val context: Context) {
-
-    fun getGoogleMapsLink(latitude: Double, longitude: Double): String {
-        return "https://maps.google.com/?q=$latitude,$longitude"
-    }
-
-    fun getShortLink(latitude: Double, longitude: Double): String {
-        return "https://maps.goo.gle/?q=$latitude,$longitude"
-    }
-
-    fun getCoordinatesString(latitude: Double, longitude: Double): String {
-        return String.format(Locale.US, "%.6f, %.6f", latitude, longitude)
-    }
+class ShareLocation(private val context: Context) : ShareLocationLinks() {
 
     fun getAddressFromLocation(latitude: Double, longitude: Double): String {
         return try {
             val geocoder = Geocoder(context, Locale.getDefault())
             val addresses = geocoder.getFromLocation(latitude, longitude, 1)
             addresses?.firstOrNull()?.getAddressLine(0) ?: "Unknown location"
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             Log.w("ShareLocation", "getAddressFromLocation: suppressed Exception", e)
             "Unknown location"
         }
@@ -89,7 +79,11 @@ class ShareLocation(private val context: Context) {
         }
         try {
             context.startActivity(intent)
-        } catch (e: Exception) {
+        } catch (e: ActivityNotFoundException) {
+            Log.w("ShareLocation", "shareViaMessaging: suppressed Exception", e)
+            // Fallback to share sheet
+            shareGeneric(latitude, longitude)
+        } catch (e: SecurityException) {
             Log.w("ShareLocation", "shareViaMessaging: suppressed Exception", e)
             // Fallback to share sheet
             shareGeneric(latitude, longitude)
@@ -138,7 +132,7 @@ class ShareLocation(private val context: Context) {
         return try {
             context.packageManager.getPackageInfo(packageName, 0)
             true
-        } catch (e: Exception) {
+        } catch (e: android.content.pm.PackageManager.NameNotFoundException) {
             Log.w("ShareLocation", "isPackageInstalled: suppressed Exception", e)
             false
         }

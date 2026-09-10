@@ -1,6 +1,11 @@
 package com.nekogps.app.features.stats
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Entity
+import androidx.room.Insert
+import androidx.room.PrimaryKey
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 /**

@@ -98,11 +98,13 @@ class BookmarkActivity : AppCompatActivity() {
                 if (name.isNotEmpty()) {
                     lifecycleScope.launch {
                         bookmarkManager.addBookmark(
-                            name = name,
-                            description = desc,
-                            category = BookmarkCategory.CUSTOM,
-                            latitude = lat,
-                            longitude = lon
+                            BookmarkManager.NewBookmark(
+                                name = name,
+                                description = desc,
+                                category = BookmarkCategory.CUSTOM,
+                                latitude = lat,
+                                longitude = lon
+                            )
                         )
                         Toast.makeText(this@BookmarkActivity, "Saved nya~", Toast.LENGTH_SHORT).show()
                     }

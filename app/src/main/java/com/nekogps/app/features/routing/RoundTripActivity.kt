@@ -14,6 +14,13 @@ import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
 
 class RoundTripActivity : AppCompatActivity() {
+    companion object {
+        private const val DEFAULT_ORIGIN_LATITUDE = 35.6762
+        private const val DEFAULT_ORIGIN_LONGITUDE = 139.6503
+        private const val DEFAULT_DESTINATION_LATITUDE = 35.6586
+        private const val DEFAULT_DESTINATION_LONGITUDE = 139.7454
+    }
+
     private lateinit var binding: ActivityRoundTripBinding
     private val roundTripGenerator by lazy { RoundTripGenerator(this) }
     private val routeOptionsManager by lazy { RouteOptionsManager(this) }
@@ -35,18 +42,33 @@ class RoundTripActivity : AppCompatActivity() {
     }
 
     private fun setupStrategyButtons() {
-        binding.btnStrategyMidpoint.setOnClickListener { selectedStrategy = RoundTripGenerator.MidwayStrategy.MIDPOINT; highlightBtn(binding.btnStrategyMidpoint) }
-        binding.btnStrategyShorter.setOnClickListener { selectedStrategy = RoundTripGenerator.MidwayStrategy.SHORTER_RETURN; highlightBtn(binding.btnStrategyShorter) }
-        binding.btnStrategyScenic.setOnClickListener { selectedStrategy = RoundTripGenerator.MidwayStrategy.SCENIC; highlightBtn(binding.btnStrategyScenic) }
+        binding.btnStrategyMidpoint.setOnClickListener {
+            selectedStrategy = RoundTripGenerator.MidwayStrategy.MIDPOINT
+            highlightBtn(binding.btnStrategyMidpoint)
+        }
+        binding.btnStrategyShorter.setOnClickListener {
+            selectedStrategy = RoundTripGenerator.MidwayStrategy.SHORTER_RETURN
+            highlightBtn(binding.btnStrategyShorter)
+        }
+        binding.btnStrategyScenic.setOnClickListener {
+            selectedStrategy = RoundTripGenerator.MidwayStrategy.SCENIC
+            highlightBtn(binding.btnStrategyScenic)
+        }
         highlightBtn(binding.btnStrategyMidpoint)
     }
 
     private fun highlightBtn(selected: MaterialButton) {
         val sel = R.color.lavender_glow
         val norm = R.color.charcoal_ink
-        binding.btnStrategyMidpoint.setBackgroundColor(ContextCompat.getColor(this, if (selected == binding.btnStrategyMidpoint) sel else norm))
-        binding.btnStrategyShorter.setBackgroundColor(ContextCompat.getColor(this, if (selected == binding.btnStrategyShorter) sel else norm))
-        binding.btnStrategyScenic.setBackgroundColor(ContextCompat.getColor(this, if (selected == binding.btnStrategyScenic) sel else norm))
+        binding.btnStrategyMidpoint.setBackgroundColor(
+            ContextCompat.getColor(this, if (selected == binding.btnStrategyMidpoint) sel else norm)
+        )
+        binding.btnStrategyShorter.setBackgroundColor(
+            ContextCompat.getColor(this, if (selected == binding.btnStrategyShorter) sel else norm)
+        )
+        binding.btnStrategyScenic.setBackgroundColor(
+            ContextCompat.getColor(this, if (selected == binding.btnStrategyScenic) sel else norm)
+        )
     }
 
     private fun setupGenerateButton() {
@@ -61,15 +83,18 @@ class RoundTripActivity : AppCompatActivity() {
 
     private fun generateRoundTrip() {
         val config = RoundTripGenerator.RoundTripConfig(
-            origin = GeoPoint(35.6762, 139.6503),
-            destination = GeoPoint(35.6586, 139.7454),
+            origin = GeoPoint(DEFAULT_ORIGIN_LATITUDE, DEFAULT_ORIGIN_LONGITUDE),
+            destination = GeoPoint(DEFAULT_DESTINATION_LATITUDE, DEFAULT_DESTINATION_LONGITUDE),
             returnWaypointLat = binding.etWaypointLat.text.toString().toDoubleOrNull(),
             returnWaypointLon = binding.etWaypointLng.text.toString().toDoubleOrNull(),
             returnWaypointName = binding.etWaypointName.text.toString().ifEmpty { "Return Waypoint" },
             optimizeReturn = true
         )
         scope.launch {
-            val result = roundTripGenerator.generateRoundTrip(config = config, routeOptionsManager = routeOptionsManager)
+            val result = roundTripGenerator.generateRoundTrip(
+                config = config,
+                routeOptionsManager = routeOptionsManager
+            )
             displayResult(result)
         }
     }
@@ -81,6 +106,8 @@ class RoundTripActivity : AppCompatActivity() {
         binding.tvReturnEta.text = DistanceCalculator.formatETA(result.returnEtaMinutes)
         binding.tvTotalDistance.text = DistanceCalculator.formatDistance(result.totalDistanceMeters)
         binding.tvTotalEta.text = DistanceCalculator.formatETA(result.totalEtaMinutes)
-        Toast.makeText(this, "${getString(R.string.round_trip_complete)}: ${DistanceCalculator.formatDistance(result.totalDistanceMeters)}", Toast.LENGTH_LONG).show()
+        val distance = DistanceCalculator.formatDistance(result.totalDistanceMeters)
+        val message = "${getString(R.string.round_trip_complete)}: $distance"
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 }

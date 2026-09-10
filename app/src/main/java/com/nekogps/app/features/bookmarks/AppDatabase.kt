@@ -8,9 +8,11 @@ import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 
 import com.nekogps.app.features.findmycar.ParkingDao
+import com.nekogps.app.features.findmycar.ParkingLocation
 import com.nekogps.app.features.stats.OdometerDao
 import com.nekogps.app.features.stats.OdometerEntity
 import com.nekogps.app.features.waypoints.WaypointDao
+import com.nekogps.app.features.waypoints.WaypointEntity
 import com.nekogps.app.features.gamification.AchievementDao
 import com.nekogps.app.features.gamification.AchievementEntity
 import com.nekogps.app.features.gamification.LeaderboardDao

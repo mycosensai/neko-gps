@@ -1,5 +1,6 @@
 package com.nekogps.app.features.performance
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -13,7 +14,40 @@ import java.util.Locale
  * Wraps platform TextToSpeech; tracks installed voices per language
  * and fires the system TTS-data installer for missing languages.
  */
-class OfflineTTSManager(private val context: Context) : TextToSpeech.OnInitListener {
+/**
+ * Engine lifecycle owned by the TTS manager: init state, stop/shutdown and
+ * voice enumeration. Split out so OfflineTTSManager stays under the
+ * function-count budget; all members remain reachable through it.
+ */
+open class TtsEngineBasics {
+
+    protected var engine: TextToSpeech? = null
+    protected var engineReady: Boolean = false
+
+    fun isReady(): Boolean = engineReady
+
+    fun stop() { try { engine?.stop() } catch (e: IllegalStateException) {
+        Log.w("OfflineTTSManager", "stop: suppressed Exception", e)
+        /* ignore */ } }
+
+    fun getAvailableVoices(): Set<Voice> {
+        return try { engine?.voices ?: emptySet() } catch (e: IllegalStateException) {
+            Log.w("OfflineTTSManager", "getAvailableVoices: suppressed Exception", e)
+            emptySet() }
+    }
+
+    fun shutdown() {
+        try { engine?.shutdown() } catch (e: IllegalStateException) {
+            Log.w("OfflineTTSManager", "shutdown: suppressed Exception", e)
+            /* ignore */ }
+        engine = null
+        engineReady = false
+    }
+}
+
+class OfflineTTSManager(private val context: Context) :
+    TtsEngineBasics(),
+    TextToSpeech.OnInitListener {
 
     data class VoicePack(
         val languageCode: String,
@@ -33,9 +67,6 @@ class OfflineTTSManager(private val context: Context) : TextToSpeech.OnInitListe
     private val prefs: SharedPreferences =
         context.getSharedPreferences("offline_tts_prefs", Context.MODE_PRIVATE)
 
-    private var tts: TextToSpeech? = null
-    private var ready = false
-
     val supportedLanguages: List<VoicePack> = listOf(
         VoicePack("en-US", "English (US)", Locale.US),
         VoicePack("en-GB", "English (UK)", Locale.UK),
@@ -50,12 +81,14 @@ class OfflineTTSManager(private val context: Context) : TextToSpeech.OnInitListe
         private set(v) { prefs.edit().putString(KEY_LANG, v).apply() }
 
     fun init() {
-        if (tts == null) tts = TextToSpeech(context.applicationContext, this)
+        if (engine == null) {
+            engine = TextToSpeech(context.applicationContext, this)
+        }
     }
 
     override fun onInit(status: Int) {
-        ready = status == TextToSpeech.SUCCESS
-        if (ready) {
+        engineReady = status == TextToSpeech.SUCCESS
+        if (engineReady) {
             applyLanguage(currentLanguageCode)
             listener?.onTtsReady()
         } else {
@@ -64,15 +97,14 @@ class OfflineTTSManager(private val context: Context) : TextToSpeech.OnInitListe
         }
     }
 
-    fun isReady(): Boolean = ready
-
     /** All packs with live installed flags from the TTS engine. */
     fun getVoicePacks(): List<VoicePack> {
-        val engine = tts
         return supportedLanguages.map { pack ->
             val avail = try {
                 engine?.isLanguageAvailable(pack.locale)
-            } catch (e: Exception) {
+            } catch (e: IllegalArgumentException) {
+                Log.w("OfflineTTSManager", "getVoicePacks: suppressed Exception", e)
+                TextToSpeech.LANG_MISSING_DATA } catch (e: IllegalStateException) {
                 Log.w("OfflineTTSManager", "getVoicePacks: suppressed Exception", e)
                 TextToSpeech.LANG_MISSING_DATA }
             pack.copy(
@@ -91,8 +123,10 @@ class OfflineTTSManager(private val context: Context) : TextToSpeech.OnInitListe
         val pack = supportedLanguages.firstOrNull { it.languageCode == languageCode }
             ?: return false
         val res = try {
-            tts?.setLanguage(pack.locale) ?: TextToSpeech.LANG_MISSING_DATA
-        } catch (e: Exception) {
+            engine?.setLanguage(pack.locale) ?: TextToSpeech.LANG_MISSING_DATA
+        } catch (e: IllegalArgumentException) {
+            Log.w("OfflineTTSManager", "selectLanguage: suppressed Exception", e)
+            TextToSpeech.LANG_MISSING_DATA } catch (e: IllegalStateException) {
             Log.w("OfflineTTSManager", "selectLanguage: suppressed Exception", e)
             TextToSpeech.LANG_MISSING_DATA }
         val ok = res == TextToSpeech.LANG_AVAILABLE ||
@@ -106,71 +140,70 @@ class OfflineTTSManager(private val context: Context) : TextToSpeech.OnInitListe
     }
 
     /** Open the system installer to download TTS voice data for a language. */
-    fun downloadVoicePack(languageCode: String): Boolean {
+    fun downloadVoicePack(): Boolean {
         return try {
             val intent = android.content.Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA)
             intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
             true
-        } catch (e: Exception) {
+        } catch (e: ActivityNotFoundException) {
+            Log.w("OfflineTTSManager", "downloadVoicePack: suppressed Exception", e)
+            listener?.onError("No TTS data installer found")
+            false
+        } catch (e: SecurityException) {
             Log.w("OfflineTTSManager", "downloadVoicePack: suppressed Exception", e)
             listener?.onError("No TTS data installer found")
             false
         }
     }
 
-    fun speak(text: String, queueMode: Int = TextToSpeech.QUEUE_FLUSH, params: Bundle? = null, utteranceId: String = "neko_tts"): Boolean {
-        val engine = tts
-        if (!ready || engine == null) return false
+    fun speak(
+        text: String,
+        queueMode: Int = TextToSpeech.QUEUE_FLUSH,
+        params: Bundle? = null,
+        utteranceId: String = DEFAULT_UTTERANCE_ID
+    ): Boolean {
+        val current = engine
+        if (!engineReady || current == null) return false
         return try {
-            engine.speak(text, queueMode, params, utteranceId) == TextToSpeech.SUCCESS
-        } catch (e: Exception) {
+            current.speak(text, queueMode, params, utteranceId) == TextToSpeech.SUCCESS
+        } catch (e: IllegalStateException) {
             Log.w("OfflineTTSManager", "speak: suppressed Exception", e)
-            Log.w(TAG, "speak failed: " + e.message)
+            Log.w(TAG, "speak failed", e)
+            false
+        } catch (e: IllegalArgumentException) {
+            Log.w("OfflineTTSManager", "speak: suppressed Exception", e)
+            Log.w(TAG, "speak failed", e)
             false
         }
     }
 
-    fun stop() { try { tts?.stop() } catch (e: Exception) {
-        Log.w("OfflineTTSManager", "stop: suppressed Exception", e)
-        /* ignore */ } }
-
     fun setSpeechRate(rate: Float) {
         prefs.edit().putFloat(KEY_RATE, rate).apply()
-        try { tts?.setSpeechRate(rate) } catch (e: Exception) {
+        try { engine?.setSpeechRate(rate) } catch (e: IllegalStateException) {
             Log.w("OfflineTTSManager", "setSpeechRate: suppressed Exception", e)
             /* ignore */ }
     }
 
     fun setPitch(pitch: Float) {
         prefs.edit().putFloat(KEY_PITCH, pitch).apply()
-        try { tts?.setPitch(pitch) } catch (e: Exception) {
+        try { engine?.setPitch(pitch) } catch (e: IllegalStateException) {
             Log.w("OfflineTTSManager", "setPitch: suppressed Exception", e)
             /* ignore */ }
-    }
-
-    fun getAvailableVoices(): Set<Voice> {
-        return try { tts?.voices ?: emptySet() } catch (e: Exception) {
-            Log.w("OfflineTTSManager", "getAvailableVoices: suppressed Exception", e)
-            emptySet() }
-    }
-
-    fun shutdown() {
-        try { tts?.shutdown() } catch (e: Exception) {
-            Log.w("OfflineTTSManager", "shutdown: suppressed Exception", e)
-            /* ignore */ }
-        tts = null
-        ready = false
     }
 
     private fun applyLanguage(languageCode: String) {
         val pack = supportedLanguages.firstOrNull { it.languageCode == languageCode }
             ?: return
         try {
-            tts?.setLanguage(pack.locale)
-            tts?.setSpeechRate(prefs.getFloat(KEY_RATE, 1.0f))
-            tts?.setPitch(prefs.getFloat(KEY_PITCH, 1.0f))
-        } catch (e: Exception) { Log.w(TAG, "applyLanguage failed: " + e.message) }
+            engine?.setLanguage(pack.locale)
+            engine?.setSpeechRate(prefs.getFloat(KEY_RATE, DEFAULT_SPEECH_RATE))
+            engine?.setPitch(prefs.getFloat(KEY_PITCH, DEFAULT_SPEECH_PITCH))
+        } catch (e: IllegalArgumentException) {
+            Log.w(TAG, "applyLanguage failed", e)
+        } catch (e: IllegalStateException) {
+            Log.w(TAG, "applyLanguage failed", e)
+        }
     }
 
     companion object {
@@ -178,5 +211,8 @@ class OfflineTTSManager(private val context: Context) : TextToSpeech.OnInitListe
         private const val KEY_LANG = "tts_language"
         private const val KEY_RATE = "tts_rate"
         private const val KEY_PITCH = "tts_pitch"
+        private const val DEFAULT_UTTERANCE_ID = "neko_tts"
+        private const val DEFAULT_SPEECH_RATE = 1.0f
+        private const val DEFAULT_SPEECH_PITCH = 1.0f
     }
 }

@@ -38,6 +38,12 @@ class MapStyleManager(private val context: Context) {
         private val STYLE_KEY = stringPreferencesKey("map_style")
         private val CUSTOM_URL_KEY = stringPreferencesKey("map_custom_url")
         private const val DEFAULT_CUSTOM_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        private const val TILE_SIZE_PX = 256
+        private const val CARTO_DARK_MAX_ZOOM = 19
+        private const val OPEN_TOPO_MAX_ZOOM = 17
+        private const val STAMEN_TONER_MAX_ZOOM = 18
+        private const val CUSTOM_MAX_ZOOM = 19
+        private const val MAX_FILE_EXTENSION_LENGTH = 5
     }
 
     val styleFlow: Flow<MapStyle> = context.mapStyleDataStore.data
@@ -66,18 +72,18 @@ class MapStyleManager(private val context: Context) {
         mapView.setTileSource(
             when (style) {
                 MapStyle.DARK -> XYTileSource(
-                    "CartoDark", 0, 19, 256, ".png",
+                    "CartoDark", 0, CARTO_DARK_MAX_ZOOM, TILE_SIZE_PX, ".png",
                     arrayOf("https://a.basemaps.cartocdn.com/dark_all/")
                 )
                 MapStyle.LIGHT -> TileSourceFactory.MAPNIK
                 MapStyle.SATELLITE -> TileSourceFactory.USGS_SAT
                 MapStyle.HYBRID -> TileSourceFactory.USGS_TOPO
                 MapStyle.TERRAIN -> XYTileSource(
-                    "OpenTopo", 0, 17, 256, ".png",
+                    "OpenTopo", 0, OPEN_TOPO_MAX_ZOOM, TILE_SIZE_PX, ".png",
                     arrayOf("https://a.tile.opentopomap.org/")
                 )
                 MapStyle.RETRO -> XYTileSource(
-                    "StamenToner", 0, 18, 256, ".png",
+                    "StamenToner", 0, STAMEN_TONER_MAX_ZOOM, TILE_SIZE_PX, ".png",
                     arrayOf("https://stamen-tiles.a.ssl.fastly.net/toner/")
                 )
                 MapStyle.CUSTOM -> buildCustomSource(customUrl ?: DEFAULT_CUSTOM_URL)
@@ -90,9 +96,9 @@ class MapStyleManager(private val context: Context) {
     fun buildCustomSource(urlTemplate: String): XYTileSource {
         // Convert {z}/{x}/{y} template into osmdroid base URL + pattern handling.
         val base = urlTemplate.substringBefore("/{z}").removeSuffix("/") + "/"
-        val ext = urlTemplate.substringAfterLast(".", ".png").take(5).let {
+        val ext = urlTemplate.substringAfterLast(".", ".png").take(MAX_FILE_EXTENSION_LENGTH).let {
             if (it.startsWith(".")) it else ".png"
         }
-        return XYTileSource("Custom", 0, 19, 256, ext, arrayOf(base))
+        return XYTileSource("Custom", 0, CUSTOM_MAX_ZOOM, TILE_SIZE_PX, ext, arrayOf(base))
     }
 }

@@ -12,6 +12,10 @@ import kotlinx.coroutines.launch
  * StatisticsActivity - tabbed view with bar/line charts.
  */
 class StatisticsActivity : AppCompatActivity() {
+    companion object {
+        private const val PERIOD_YEAR_INDEX = 3
+    }
+
     private val dashboard = StatisticsDashboard(this)
     private var currentPeriod = OdometerManager.Period.MONTHLY
 
@@ -25,10 +29,18 @@ class StatisticsActivity : AppCompatActivity() {
     }
 
     private fun setupTabs() {
-        findViewById<MaterialButton>(com.nekogps.app.R.id.tabDay).setOnClickListener { setPeriod(OdometerManager.Period.DAILY) }
-        findViewById<MaterialButton>(com.nekogps.app.R.id.tabWeek).setOnClickListener { setPeriod(OdometerManager.Period.WEEKLY) }
-        findViewById<MaterialButton>(com.nekogps.app.R.id.tabMonth).setOnClickListener { setPeriod(OdometerManager.Period.MONTHLY) }
-        findViewById<MaterialButton>(com.nekogps.app.R.id.tabYear).setOnClickListener { setPeriod(OdometerManager.Period.YEARLY) }
+        findViewById<MaterialButton>(
+            com.nekogps.app.R.id.tabDay
+        ).setOnClickListener { setPeriod(OdometerManager.Period.DAILY) }
+        findViewById<MaterialButton>(
+            com.nekogps.app.R.id.tabWeek
+        ).setOnClickListener { setPeriod(OdometerManager.Period.WEEKLY) }
+        findViewById<MaterialButton>(
+            com.nekogps.app.R.id.tabMonth
+        ).setOnClickListener { setPeriod(OdometerManager.Period.MONTHLY) }
+        findViewById<MaterialButton>(
+            com.nekogps.app.R.id.tabYear
+        ).setOnClickListener { setPeriod(OdometerManager.Period.YEARLY) }
     }
 
     private fun setPeriod(period: OdometerManager.Period) {
@@ -38,12 +50,17 @@ class StatisticsActivity : AppCompatActivity() {
     }
 
     private fun updateTabStyles() {
-        val tabs = listOf(com.nekogps.app.R.id.tabDay, com.nekogps.app.R.id.tabWeek, com.nekogps.app.R.id.tabMonth, com.nekogps.app.R.id.tabYear)
+        val tabs = listOf(
+            com.nekogps.app.R.id.tabDay,
+            com.nekogps.app.R.id.tabWeek,
+            com.nekogps.app.R.id.tabMonth,
+            com.nekogps.app.R.id.tabYear
+        )
         val periodOrdinal = when (currentPeriod) {
             OdometerManager.Period.DAILY -> 0
             OdometerManager.Period.WEEKLY -> 1
             OdometerManager.Period.MONTHLY -> 2
-            OdometerManager.Period.YEARLY -> 3
+            OdometerManager.Period.YEARLY -> PERIOD_YEAR_INDEX
             else -> 2
         }
         tabs.forEachIndexed { i, id ->

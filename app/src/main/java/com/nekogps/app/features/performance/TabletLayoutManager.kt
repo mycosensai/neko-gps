@@ -25,7 +25,7 @@ class TabletLayoutManager(private val context: Context) {
     fun isTablet(): Boolean {
         val metrics = context.resources.displayMetrics
         val widthDp = metrics.widthPixels / metrics.density
-        return widthDp >= 600
+        return widthDp >= TABLET_MIN_WIDTH_DP
     }
 
     fun currentMode(): LayoutMode = if (isTablet()) LayoutMode.DUAL_PANE else LayoutMode.SINGLE_PANE
@@ -93,5 +93,9 @@ class TabletLayoutManager(private val context: Context) {
         } else {
             android.widget.LinearLayout.LayoutParams(0, FrameLayout.LayoutParams.MATCH_PARENT, weight)
         }
+    }
+
+    companion object {
+        private const val TABLET_MIN_WIDTH_DP = 600f
     }
 }

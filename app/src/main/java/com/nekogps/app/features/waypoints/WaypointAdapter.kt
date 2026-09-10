@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.nekogps.app.R
-import com.nekogps.app.features.bookmarks.WaypointEntity
+import com.nekogps.app.features.waypoints.WaypointEntity
 
 /**
  * WaypointAdapter - RecyclerView adapter with drag-and-drop reordering support.
@@ -62,7 +62,12 @@ class WaypointAdapter(
             tvOrder.text = "${waypoint.order + 1}"
             tvName.text = waypoint.name
             tvDescription.text = waypoint.description.ifEmpty { "No description" }
-            tvCoordinates.text = String.format("%.5f, %.5f", waypoint.latitude, waypoint.longitude)
+            tvCoordinates.text = String.format(
+                java.util.Locale.getDefault(),
+                "%.5f, %.5f",
+                waypoint.latitude,
+                waypoint.longitude
+            )
 
             btnDelete.setOnClickListener { onDeleteClick(waypoint) }
         }
@@ -107,5 +112,5 @@ class SimpleItemTouchHelperCallback(
         return true
     }
 
-    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
+    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) = Unit
 }

@@ -33,6 +33,10 @@ class CarModeActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private var recognizer: SpeechRecognizer? = null
     private var voiceOnly = true
 
+    companion object {
+        private const val VOICE_PERMISSION_REQUEST_CODE = 41
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeManager(this).applyStoredTheme(this)
         super.onCreate(savedInstanceState)
@@ -90,7 +94,11 @@ class CarModeActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
             != PackageManager.PERMISSION_GRANTED
         ) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 41)
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.RECORD_AUDIO),
+                VOICE_PERMISSION_REQUEST_CODE
+            )
             return
         }
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {

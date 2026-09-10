@@ -28,6 +28,7 @@ class HUDActivity : AppCompatActivity() {
     private lateinit var binding: ActivityHudBinding
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var speedLimitManager: SpeedLimitManager
+    private lateinit var displayHelper: HudDisplayHelper
     private val handler = Handler(Looper.getMainLooper())
 
     private var currentSpeedKmh = 0.0
@@ -39,15 +40,9 @@ class HUDActivity : AppCompatActivity() {
     private var isMirrored = true
 
     companion object {
-        private const val ARROW_STRAIGHT = "↑"
-        private const val ARROW_LEFT = "←"
-        private const val ARROW_RIGHT = "→"
-        private const val ARROW_SLIGHT_LEFT = "↖"
-        private const val ARROW_SLIGHT_RIGHT = "↗"
-        private const val ARROW_SHARP_LEFT = "⬅"
-        private const val ARROW_SHARP_RIGHT = "➡"
-        private const val ARROW_UTURN = "↩"
-        private const val ARROW_ARRIVE = "🏁"
+        private const val SPEED_WARNING_HIDE_DELAY_MS = 3000L
+        private const val FASTEST_LOCATION_INTERVAL_MS = 500L
+        private const val MS_TO_KMH = 3.6
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,6 +60,7 @@ class HUDActivity : AppCompatActivity() {
 
         binding = ActivityHudBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        displayHelper = HudDisplayHelper(binding, this)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         speedLimitManager = SpeedLimitManager()
@@ -111,7 +107,7 @@ class HUDActivity : AppCompatActivity() {
                 binding.tvSpeedWarning.text = "⚠️ OVER LIMIT: $speed / $limit km/h"
                 handler.postDelayed({
                     binding.tvSpeedWarning.visibility = View.GONE
-                }, 3000)
+                }, SPEED_WARNING_HIDE_DELAY_MS)
             }
         }
     }
@@ -143,7 +139,7 @@ class HUDActivity : AppCompatActivity() {
         val locationRequest = LocationRequest.create().apply {
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
             interval = TimeUnit.SECONDS.toMillis(1)
-            fastestInterval = TimeUnit.MILLISECONDS.toMillis(500)
+            fastestInterval = TimeUnit.MILLISECONDS.toMillis(FASTEST_LOCATION_INTERVAL_MS)
         }
 
         fusedLocationClient.requestLocationUpdates(
@@ -152,7 +148,7 @@ class HUDActivity : AppCompatActivity() {
                 override fun onLocationResult(result: com.google.android.gms.location.LocationResult) {
                     val loc = result.lastLocation ?: return
                     currentLocation = GeoPoint(loc.latitude, loc.longitude)
-                    currentSpeedKmh = loc.speed * 3.6 // m/s to km/h
+                    currentSpeedKmh = loc.speed * MS_TO_KMH // m/s to km/h
                     updateDisplay()
                     speedLimitManager.updateLocation(currentLocation!!, currentSpeedKmh.toFloat())
                 }
@@ -163,7 +159,7 @@ class HUDActivity : AppCompatActivity() {
 
     private fun updateDisplay() {
         // Update speed
-        binding.tvSpeed.text = String.format("%.0f", currentSpeedKmh)
+        binding.tvSpeed.text = String.format(java.util.Locale.getDefault(), "%.0f", currentSpeedKmh)
 
         // Update distance to next turn
         binding.tvDistance.text = DistanceCalculator.formatDistance(nextTurnDistanceMeters)
@@ -175,39 +171,10 @@ class HUDActivity : AppCompatActivity() {
         binding.tvInstruction.text = nextTurnDirection
 
         // Update turn arrow
-        updateTurnArrow()
+        displayHelper.updateTurnArrow(nextTurnDirection)
 
         // Update speed warning indicator
-        updateSpeedWarning()
-    }
-
-    private fun updateTurnArrow() {
-        val arrow = when {
-            nextTurnDirection.contains("arrive", ignoreCase = true) -> ARROW_ARRIVE
-            nextTurnDirection.contains("uturn", ignoreCase = true) -> ARROW_UTURN
-            nextTurnDirection.contains("sharp left", ignoreCase = true) -> ARROW_SHARP_LEFT
-            nextTurnDirection.contains("sharp right", ignoreCase = true) -> ARROW_SHARP_RIGHT
-            nextTurnDirection.contains("slight left", ignoreCase = true) -> ARROW_SLIGHT_LEFT
-            nextTurnDirection.contains("slight right", ignoreCase = true) -> ARROW_SLIGHT_RIGHT
-            nextTurnDirection.contains("left", ignoreCase = true) -> ARROW_LEFT
-            nextTurnDirection.contains("right", ignoreCase = true) -> ARROW_RIGHT
-            else -> ARROW_STRAIGHT
-        }
-        binding.tvArrow.text = arrow
-    }
-
-    private fun updateSpeedWarning() {
-        // Show warning if speeding (example: > 100 km/h)
-        if (currentSpeedKmh > 100) {
-            binding.tvSpeed.setTextColor(getColor(android.R.color.holo_red_light))
-            binding.tvSpeedWarning.visibility = View.VISIBLE
-        } else if (currentSpeedKmh > 80) {
-            binding.tvSpeed.setTextColor(getColor(android.R.color.holo_orange_light))
-            binding.tvSpeedWarning.visibility = View.GONE
-        } else {
-            binding.tvSpeed.setTextColor(getColor(android.R.color.white))
-            binding.tvSpeedWarning.visibility = View.GONE
-        }
+        displayHelper.updateSpeedWarning(currentSpeedKmh)
     }
 
     /**

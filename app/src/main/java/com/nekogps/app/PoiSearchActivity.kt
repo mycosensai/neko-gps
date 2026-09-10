@@ -3,6 +3,7 @@ package com.nekogps.app
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,7 +17,9 @@ import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.nekogps.app.utils.DistanceCalculator
 import org.json.JSONArray
+import org.json.JSONException
 import java.io.BufferedReader
+import java.io.IOException
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
@@ -43,6 +46,9 @@ class PoiSearchActivity : AppCompatActivity() {
         private const val NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
         private const val DEFAULT_LAT = 40.7128
         private const val DEFAULT_LNG = -74.0060
+        private const val CONNECT_TIMEOUT_MS = 15000
+        private const val READ_TIMEOUT_MS = 15000
+        private const val POI_NAME_PREVIEW_LENGTH = 30
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -120,8 +126,8 @@ class PoiSearchActivity : AppCompatActivity() {
                 val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "GET"
                 connection.setRequestProperty("User-Agent", "NekoGPS/1.0")
-                connection.connectTimeout = 15000
-                connection.readTimeout = 15000
+                connection.connectTimeout = CONNECT_TIMEOUT_MS
+                connection.readTimeout = READ_TIMEOUT_MS
 
                 val responseCode = connection.responseCode
                 if (responseCode == HttpURLConnection.HTTP_OK) {
@@ -158,8 +164,13 @@ class PoiSearchActivity : AppCompatActivity() {
                     }
                 }
                 connection.disconnect()
-            } catch (e: Exception) {
-                e.printStackTrace()
+            } catch (e: IOException) {
+                Log.w("PoiSearchActivity", "Search failed", e)
+                handler.post {
+                    Toast.makeText(this, "Search error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: JSONException) {
+                Log.w("PoiSearchActivity", "Search failed", e)
                 handler.post {
                     Toast.makeText(this, "Search error: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
@@ -168,7 +179,7 @@ class PoiSearchActivity : AppCompatActivity() {
     }
 
     private fun onPoiSelected(result: PoiResult) {
-        Toast.makeText(this, "Selected: ${result.name.take(30)}...", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Selected: ${result.name.take(POI_NAME_PREVIEW_LENGTH)}...", Toast.LENGTH_SHORT).show()
     }
 
     data class PoiResult(

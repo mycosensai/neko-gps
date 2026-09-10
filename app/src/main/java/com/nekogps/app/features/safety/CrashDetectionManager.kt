@@ -27,6 +27,8 @@ class CrashDetectionManager private constructor(private val context: Context) {
         private const val SAMPLE_RATE_US = 20000 // 50Hz sampling
         private const val MIN_SPEED_KMH = 20.0f // Minimum speed to consider crash detection
         private const val POST_CRASH_COOLDOWN_MS = 60000 // 1 minute cooldown
+        private const val SENSOR_BUFFER_CAPACITY = 50 // 1 second at 50Hz
+        private const val MS2_PER_G = 9.81f // Gravity for m/s² to g conversion
 
         @Volatile
         private var instance: CrashDetectionManager? = null
@@ -43,15 +45,11 @@ class CrashDetectionManager private constructor(private val context: Context) {
     private val handler = Handler(Looper.getMainLooper())
 
     private var isMonitoring = false
-    private var isCountdownActive = false
     private var currentSpeedKmh = 0f
     private var lastCrashTime = 0L
-    private var countdownSecondsRemaining = COUNTDOWN_SECONDS
-    private var countdownRunnable: Runnable? = null
-    private var alertDialog: AlertDialog? = null
 
     // Sensor data buffer for pattern detection
-    private val accelerationBuffer = CircularBuffer<Float>(50) // 1 second at 50Hz
+    private val accelerationBuffer = CircularBuffer<Float>(SENSOR_BUFFER_CAPACITY)
     private var previousMagnitude = 0f
 
     interface CrashDetectionListener {
@@ -65,12 +63,35 @@ class CrashDetectionManager private constructor(private val context: Context) {
 
     private val listeners = mutableListOf<CrashDetectionListener>()
 
+    private val countdownController = CrashCountdownController(
+        context,
+        handler,
+        COUNTDOWN_SECONDS,
+        object : CrashCountdownController.CountdownEvents {
+            override fun onCountdownStarted(seconds: Int) {
+                listeners.forEach { it.onCountdownStarted(seconds) }
+            }
+
+            override fun onCountdownTick(secondsRemaining: Int) {
+                listeners.forEach { it.onCountdownTick(secondsRemaining) }
+            }
+
+            override fun onCountdownCancelled() {
+                listeners.forEach { it.onCountdownCancelled() }
+            }
+
+            override fun onAutoSOSTriggered() {
+                listeners.forEach { it.onAutoSOSTriggered() }
+            }
+        }
+    )
+
     private val sensorEventListener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent?) {
             event?.let { processSensorData(it) }
         }
 
-        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
     }
 
     fun addListener(listener: CrashDetectionListener) {
@@ -102,7 +123,7 @@ class CrashDetectionManager private constructor(private val context: Context) {
         if (!isMonitoring) return
         isMonitoring = false
         sensorManager.unregisterListener(sensorEventListener)
-        cancelCountdown()
+        countdownController.cancelCountdown()
         listeners.forEach { it.onMonitoringChanged(false) }
         Log.d(TAG, "Crash detection stopped")
     }
@@ -135,12 +156,13 @@ class CrashDetectionManager private constructor(private val context: Context) {
         val isImpact = magnitude > IMPACT_THRESHOLD
 
         // Check for sudden deceleration: rapid decrease in magnitude
-        val isSuddenDeceleration = deltaMagnitude > DECELERATION_THRESHOLD && magnitude < previousMagnitude
+        val isSuddenDeceleration =
+            deltaMagnitude > DECELERATION_THRESHOLD && magnitude < previousMagnitude
 
         // Crash detected if both impact and sudden deceleration occur
         if (isImpact && isSuddenDeceleration) {
-            val impactG = magnitude / 9.81f
-            val decelerationG = deltaMagnitude / 9.81f
+            val impactG = magnitude / MS2_PER_G
+            val decelerationG = deltaMagnitude / MS2_PER_G
             onCrashDetected(impactG, decelerationG)
         }
     }
@@ -152,18 +174,66 @@ class CrashDetectionManager private constructor(private val context: Context) {
         listeners.forEach { it.onCrashDetected(impactG, decelerationG) }
 
         // Show countdown dialog
-        showCountdownDialog()
+        countdownController.showCountdownDialog()
     }
 
-    private fun showCountdownDialog() {
+    // Circular buffer for sensor data
+    private class CircularBuffer<T>(private val capacity: Int) {
+        private val buffer = mutableListOf<T>()
+
+        fun add(item: T) {
+            buffer.add(item)
+            if (buffer.size > capacity) buffer.removeAt(0)
+        }
+
+        fun get(index: Int): T? {
+            if (index < 0 || index >= buffer.size) return null
+            return buffer[index]
+        }
+
+        fun getSize(): Int = buffer.size
+    }
+}
+
+/**
+ * Controls the post-crash countdown dialog and auto-SOS trigger.
+ * Extracted from [CrashDetectionManager] to keep class sizes within limits.
+ */
+private class CrashCountdownController(
+    private val context: Context,
+    private val handler: Handler,
+    private val totalSeconds: Int,
+    private val callback: CountdownEvents
+) {
+
+    companion object {
+        private const val COUNTDOWN_TICK_MS = 1000L
+    }
+
+    interface CountdownEvents {
+        fun onCountdownStarted(seconds: Int)
+        fun onCountdownTick(secondsRemaining: Int)
+        fun onCountdownCancelled()
+        fun onAutoSOSTriggered()
+    }
+
+    private var isCountdownActive = false
+    private var countdownSecondsRemaining = 0
+    private var countdownRunnable: Runnable? = null
+    private var alertDialog: AlertDialog? = null
+
+    fun showCountdownDialog() {
         if (isCountdownActive) return
         isCountdownActive = true
-        countdownSecondsRemaining = COUNTDOWN_SECONDS
+        countdownSecondsRemaining = totalSeconds
 
         handler.post {
             val builder = AlertDialog.Builder(context)
             builder.setTitle("⚠️ Crash Detected")
-            builder.setMessage("A potential crash was detected. Emergency SOS will be sent in $COUNTDOWN_SECONDS seconds unless cancelled.")
+            val initialMessage =
+                "A potential crash was detected. Emergency SOS will be sent in " +
+                    "$totalSeconds seconds unless cancelled."
+            builder.setMessage(initialMessage)
             builder.setCancelable(false)
 
             builder.setPositiveButton("Cancel SOS") { _, _ ->
@@ -187,17 +257,20 @@ class CrashDetectionManager private constructor(private val context: Context) {
         }
     }
 
-    private fun startCountdown() {
-        listeners.forEach { it.onCountdownStarted(COUNTDOWN_SECONDS) }
+    fun startCountdown() {
+        callback.onCountdownStarted(totalSeconds)
 
         countdownRunnable = object : Runnable {
             override fun run() {
                 countdownSecondsRemaining--
                 if (countdownSecondsRemaining > 0) {
                     // Update dialog message
-                    alertDialog?.setMessage("A potential crash was detected. Emergency SOS will be sent in $countdownSecondsRemaining seconds unless cancelled.")
-                    listeners.forEach { it.onCountdownTick(countdownSecondsRemaining) }
-                    handler.postDelayed(this, 1000)
+                    val tickMessage =
+                        "A potential crash was detected. Emergency SOS will be sent in " +
+                            "$countdownSecondsRemaining seconds unless cancelled."
+                    alertDialog?.setMessage(tickMessage)
+                    callback.onCountdownTick(countdownSecondsRemaining)
+                    handler.postDelayed(this, COUNTDOWN_TICK_MS)
                 } else {
                     // Countdown expired - trigger SOS
                     isCountdownActive = false
@@ -207,42 +280,25 @@ class CrashDetectionManager private constructor(private val context: Context) {
                 }
             }
         }
-        handler.postDelayed(countdownRunnable!!, 1000)
+        handler.postDelayed(countdownRunnable!!, COUNTDOWN_TICK_MS)
     }
 
-    private fun cancelCountdown() {
+    fun cancelCountdown() {
         if (!isCountdownActive) return
         isCountdownActive = false
         countdownRunnable?.let { handler.removeCallbacks(it) }
         countdownRunnable = null
         alertDialog?.dismiss()
         alertDialog = null
-        listeners.forEach { it.onCountdownCancelled() }
-        Log.d(TAG, "Crash SOS countdown cancelled")
+        callback.onCountdownCancelled()
+        Log.d("CrashDetectionManager", "Crash SOS countdown cancelled")
     }
 
     private fun triggerEmergencySOS() {
-        Log.w(TAG, "Auto-triggering Emergency SOS after crash detection")
-        listeners.forEach { it.onAutoSOSTriggered() }
+        Log.w("CrashDetectionManager", "Auto-triggering Emergency SOS after crash detection")
+        callback.onAutoSOSTriggered()
 
         val sosManager = EmergencySOSManager.getInstance(context)
         sosManager.triggerSOS()
-    }
-
-    // Circular buffer for sensor data
-    private class CircularBuffer<T>(private val capacity: Int) {
-        private val buffer = mutableListOf<T>()
-
-        fun add(item: T) {
-            buffer.add(item)
-            if (buffer.size > capacity) buffer.removeAt(0)
-        }
-
-        fun get(index: Int): T? {
-            if (index < 0 || index >= buffer.size) return null
-            return buffer[index]
-        }
-
-        fun getSize(): Int = buffer.size
     }
 }

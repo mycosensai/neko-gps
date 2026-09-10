@@ -12,27 +12,32 @@ class BookmarkManager(context: Context) {
 
     val allBookmarks: Flow<List<BookmarkEntity>> = dao.getAllBookmarks()
 
+    /**
+     * Input for creating a new bookmark, grouping the fields of [addBookmark].
+     */
+    data class NewBookmark(
+        val name: String,
+        val latitude: Double,
+        val longitude: Double,
+        val description: String = "",
+        val category: BookmarkCategory = BookmarkCategory.CUSTOM,
+        val address: String = ""
+    )
+
     fun getBookmarksByCategory(category: BookmarkCategory): Flow<List<BookmarkEntity>> {
         return dao.getBookmarksByCategory(category)
     }
 
-    suspend fun addBookmark(
-        name: String,
-        description: String = "",
-        category: BookmarkCategory = BookmarkCategory.CUSTOM,
-        latitude: Double,
-        longitude: Double,
-        address: String = ""
-    ): Long {
-        val bookmark = BookmarkEntity(
-            name = name,
-            description = description,
-            category = category,
-            latitude = latitude,
-            longitude = longitude,
-            address = address
+    suspend fun addBookmark(bookmark: NewBookmark): Long {
+        val entity = BookmarkEntity(
+            name = bookmark.name,
+            description = bookmark.description,
+            category = bookmark.category,
+            latitude = bookmark.latitude,
+            longitude = bookmark.longitude,
+            address = bookmark.address
         )
-        return dao.insert(bookmark)
+        return dao.insert(entity)
     }
 
     suspend fun updateBookmark(bookmark: BookmarkEntity) {

@@ -1,5 +1,6 @@
 package com.nekogps.app.features.safety
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.SharedPreferences
 import android.location.Location
@@ -11,21 +12,114 @@ import org.osmdroid.util.GeoPoint
 import java.util.*
 
 /**
- * Emergency SOS Manager with location sharing and emergency contacts.
- * Sends SMS/call with location to configured emergency contacts.
- * Contacts configurable via SharedPreferences.
+ * Persistent store for emergency contacts backing [EmergencySOSManager].
+ * Extracted to keep per-class function counts within limits.
  */
-class EmergencySOSManager private constructor(private val context: Context) {
+open class EmergencySOSContactStore protected constructor(protected val context: Context) {
 
     companion object {
         private const val PREFS_NAME = "emergency_sos"
         private const val KEY_CONTACTS = "emergency_contacts"
+    }
+
+    protected val prefs: SharedPreferences =
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+    fun getEmergencyContacts(): List<EmergencySOSManager.EmergencyContact> {
+        val json = prefs.getString(KEY_CONTACTS, null) ?: return emptyList()
+        val type = object : com.google.gson.reflect.TypeToken<List<EmergencySOSManager.EmergencyContact>>() {}.type
+        return try {
+            com.google.gson.Gson().fromJson(json, type) ?: emptyList()
+        } catch (e: com.google.gson.JsonSyntaxException) {
+            Log.w("EmergencySOSManager", "getEmergencyContacts: suppressed Exception", e)
+            emptyList()
+        }
+    }
+
+    fun addEmergencyContact(contact: EmergencySOSManager.EmergencyContact) {
+        val contacts = getEmergencyContacts().toMutableList()
+        // Ensure only one primary contact
+        if (contact.isPrimary) {
+            contacts.forEach { it.isPrimary = false }
+        }
+        contacts.add(contact)
+        saveContacts(contacts)
+    }
+
+    fun updateEmergencyContact(contact: EmergencySOSManager.EmergencyContact) {
+        val contacts = getEmergencyContacts().toMutableList()
+        val index = contacts.indexOfFirst { it.id == contact.id }
+        if (index >= 0) {
+            // Ensure only one primary contact
+            if (contact.isPrimary) {
+                contacts.forEach { it.isPrimary = false }
+            }
+            contacts[index] = contact
+            saveContacts(contacts)
+        }
+    }
+
+    fun removeEmergencyContact(contactId: String) {
+        val contacts = getEmergencyContacts().toMutableList()
+        contacts.removeAll { it.id == contactId }
+        saveContacts(contacts)
+    }
+
+    protected fun saveContacts(contacts: List<EmergencySOSManager.EmergencyContact>) {
+        val json = com.google.gson.Gson().toJson(contacts)
+        prefs.edit().putString(KEY_CONTACTS, json).apply()
+    }
+}
+
+/**
+ * SOS behavior settings backing [EmergencySOSManager].
+ * Extracted to keep per-class function counts within limits.
+ */
+open class EmergencySOSSettingsStore protected constructor(context: Context) :
+    EmergencySOSContactStore(context) {
+
+    companion object {
         private const val KEY_AUTO_SEND_SMS = "auto_send_sms"
         private const val KEY_AUTO_CALL = "auto_call"
         private const val KEY_INCLUDE_LOCATION = "include_location"
         private const val KEY_MESSAGE_TEMPLATE = "message_template"
         private const val DEFAULT_MESSAGE = "EMERGENCY: I need help! My location: {location} - Sent from Neko GPS"
+    }
 
+    fun setAutoSendSMS(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_AUTO_SEND_SMS, enabled).apply()
+    }
+
+    fun getAutoSendSMS(): Boolean = prefs.getBoolean(KEY_AUTO_SEND_SMS, true)
+
+    fun setAutoCall(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_AUTO_CALL, enabled).apply()
+    }
+
+    fun getAutoCall(): Boolean = prefs.getBoolean(KEY_AUTO_CALL, false)
+
+    fun setIncludeLocation(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_INCLUDE_LOCATION, enabled).apply()
+    }
+
+    fun getIncludeLocation(): Boolean = prefs.getBoolean(KEY_INCLUDE_LOCATION, true)
+
+    fun setMessageTemplate(template: String) {
+        prefs.edit().putString(KEY_MESSAGE_TEMPLATE, template).apply()
+    }
+
+    fun getMessageTemplate(): String = prefs.getString(KEY_MESSAGE_TEMPLATE, DEFAULT_MESSAGE) ?: DEFAULT_MESSAGE
+}
+
+/**
+ * Emergency SOS Manager with location sharing and emergency contacts.
+ * Sends SMS/call with location to configured emergency contacts.
+ * Contacts configurable via SharedPreferences.
+ */
+class EmergencySOSManager private constructor(context: Context) :
+    EmergencySOSSettingsStore(context) {
+
+    companion object {
         @Volatile
         private var instance: EmergencySOSManager? = null
 
@@ -35,8 +129,6 @@ class EmergencySOSManager private constructor(private val context: Context) {
             }
         }
     }
-
-    private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     data class EmergencyContact(
         val id: String = UUID.randomUUID().toString(),
@@ -71,70 +163,6 @@ class EmergencySOSManager private constructor(private val context: Context) {
     fun removeListener(listener: EmergencySOSListener) {
         listeners.remove(listener)
     }
-
-    fun getEmergencyContacts(): List<EmergencyContact> {
-        val json = prefs.getString(KEY_CONTACTS, null) ?: return emptyList()
-        val type = object : com.google.gson.reflect.TypeToken<List<EmergencyContact>>() {}.type
-        return try {
-            com.google.gson.Gson().fromJson(json, type) ?: emptyList()
-        } catch (e: Exception) {
-            Log.w("EmergencySOSManager", "getEmergencyContacts: suppressed Exception", e)
-            emptyList()
-        }
-    }
-
-    fun addEmergencyContact(contact: EmergencyContact) {
-        val contacts = getEmergencyContacts().toMutableList()
-        // Ensure only one primary contact
-        if (contact.isPrimary) {
-            contacts.forEach { it.isPrimary = false }
-        }
-        contacts.add(contact)
-        saveContacts(contacts)
-    }
-
-    fun updateEmergencyContact(contact: EmergencyContact) {
-        val contacts = getEmergencyContacts().toMutableList()
-        val index = contacts.indexOfFirst { it.id == contact.id }
-        if (index >= 0) {
-            // Ensure only one primary contact
-            if (contact.isPrimary) {
-                contacts.forEach { it.isPrimary = false }
-            }
-            contacts[index] = contact
-            saveContacts(contacts)
-        }
-    }
-
-    fun removeEmergencyContact(contactId: String) {
-        val contacts = getEmergencyContacts().toMutableList()
-        contacts.removeAll { it.id == contactId }
-        saveContacts(contacts)
-    }
-
-    fun setAutoSendSMS(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_AUTO_SEND_SMS, enabled).apply()
-    }
-
-    fun getAutoSendSMS(): Boolean = prefs.getBoolean(KEY_AUTO_SEND_SMS, true)
-
-    fun setAutoCall(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_AUTO_CALL, enabled).apply()
-    }
-
-    fun getAutoCall(): Boolean = prefs.getBoolean(KEY_AUTO_CALL, false)
-
-    fun setIncludeLocation(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_INCLUDE_LOCATION, enabled).apply()
-    }
-
-    fun getIncludeLocation(): Boolean = prefs.getBoolean(KEY_INCLUDE_LOCATION, true)
-
-    fun setMessageTemplate(template: String) {
-        prefs.edit().putString(KEY_MESSAGE_TEMPLATE, template).apply()
-    }
-
-    fun getMessageTemplate(): String = prefs.getString(KEY_MESSAGE_TEMPLATE, DEFAULT_MESSAGE) ?: DEFAULT_MESSAGE
 
     fun setCurrentLocation(location: Location) {
         currentLocation = location
@@ -209,8 +237,11 @@ class EmergencySOSManager private constructor(private val context: Context) {
                 smsManager.sendTextMessage(contact.phoneNumber, null, message, null, null)
                 Log.d("EmergencySOS", "SMS sent to ${contact.name} (${contact.phoneNumber})")
                 callback(true)
-            } catch (e: Exception) {
-                Log.e("EmergencySOS", "Failed to send SMS to ${contact.name}", e)
+            } catch (e: SecurityException) {
+                Log.w("EmergencySOS", "Failed to send SMS to ${contact.name}", e)
+                callback(false)
+            } catch (e: IllegalArgumentException) {
+                Log.w("EmergencySOS", "Failed to send SMS to ${contact.name}", e)
                 callback(false)
             }
         }
@@ -228,8 +259,11 @@ class EmergencySOSManager private constructor(private val context: Context) {
                 context.startActivity(intent)
                 Log.d("EmergencySOS", "Call initiated to ${contact.name} (${contact.phoneNumber})")
                 callback(true)
-            } catch (e: Exception) {
-                Log.e("EmergencySOS", "Failed to call ${contact.name}", e)
+            } catch (e: ActivityNotFoundException) {
+                Log.w("EmergencySOS", "Failed to call ${contact.name}", e)
+                callback(false)
+            } catch (e: SecurityException) {
+                Log.w("EmergencySOS", "Failed to call ${contact.name}", e)
                 callback(false)
             }
         }
@@ -240,10 +274,5 @@ class EmergencySOSManager private constructor(private val context: Context) {
             // All actions completed (success or failure)
             listeners.forEach { it.onSOSCompleted(successCount, totalCount) }
         }
-    }
-
-    private fun saveContacts(contacts: List<EmergencyContact>) {
-        val json = com.google.gson.Gson().toJson(contacts)
-        prefs.edit().putString(KEY_CONTACTS, json).apply()
     }
 }

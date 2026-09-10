@@ -10,7 +10,6 @@ import android.view.animation.Animation
 import android.view.animation.ScaleAnimation
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 
 /**
@@ -42,7 +41,10 @@ class AnimationManager {
         val startZoom = mapView.zoomLevelDouble
         listener?.onAnimationStart()
         val animator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = durationMs.coerceIn(100, 3000)
+            duration = durationMs.coerceIn(
+                MIN_ANIM_DURATION_MS,
+                MAX_ANIM_DURATION_MS
+            )
             interpolator = this@AnimationManager.interpolator
             addUpdateListener { v ->
                 val f = v.animatedFraction
@@ -53,10 +55,10 @@ class AnimationManager {
             }
         }
         animator.addListener(object : android.animation.Animator.AnimatorListener {
-            override fun onAnimationStart(a: android.animation.Animator) {}
+            override fun onAnimationStart(a: android.animation.Animator) = Unit
             override fun onAnimationEnd(a: android.animation.Animator) { listener?.onAnimationEnd() }
             override fun onAnimationCancel(a: android.animation.Animator) { listener?.onAnimationCancel() }
-            override fun onAnimationRepeat(a: android.animation.Animator) {}
+            override fun onAnimationRepeat(a: android.animation.Animator) = Unit
         })
         animator.start()
     }
@@ -76,7 +78,9 @@ class AnimationManager {
             onDone?.invoke()
             return
         }
-        val perPoint = (durationMs / fullPath.size).coerceAtLeast(16)
+        val perPoint = (durationMs / fullPath.size).coerceAtLeast(
+            MIN_PER_POINT_MS
+        )
         routeAnimator = ValueAnimator.ofInt(2, fullPath.size).apply {
             duration = perPoint * fullPath.size
             interpolator = this@AnimationManager.interpolator
@@ -87,10 +91,10 @@ class AnimationManager {
             }
         }
         routeAnimator?.addListener(object : android.animation.Animator.AnimatorListener {
-            override fun onAnimationStart(a: android.animation.Animator) {}
+            override fun onAnimationStart(a: android.animation.Animator) = Unit
             override fun onAnimationEnd(a: android.animation.Animator) { onDone?.invoke() }
-            override fun onAnimationCancel(a: android.animation.Animator) {}
-            override fun onAnimationRepeat(a: android.animation.Animator) {}
+            override fun onAnimationCancel(a: android.animation.Animator) = Unit
+            override fun onAnimationRepeat(a: android.animation.Animator) = Unit
         })
         routeAnimator?.start()
     }
@@ -100,20 +104,17 @@ class AnimationManager {
         routeAnimator = null
     }
 
-    /** Drop-in marker effect: quick scale pop on the marker icon view. */
-    fun popMarker(marker: Marker) {
-        // osmdroid Markers are drawn on canvas (no per-marker View), so pulse
-        // via a short alpha-green flash using related icon techniques is complex;
-        // simplest visible effect: briefly nudge position to force redraw shimmer.
-        // Callers with a backing View should use popView() instead.
-        handler.post { /* redraw tick to surface icon change */ }
-    }
-
     /** Scale-pop for any backing View (e.g. callout bubble). */
     fun popView(view: View, durationMs: Long = 250) {
         val anim = ScaleAnimation(
-            0.6f, 1.0f, 0.6f, 1.0f,
-            Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f
+            POP_SCALE_FROM,
+            POP_SCALE_TO,
+            POP_SCALE_FROM,
+            POP_SCALE_TO,
+            Animation.RELATIVE_TO_SELF,
+            POP_PIVOT,
+            Animation.RELATIVE_TO_SELF,
+            POP_PIVOT
         ).apply {
             duration = durationMs
             interpolator = this@AnimationManager.interpolator
@@ -130,8 +131,8 @@ class AnimationManager {
     fun fadeOut(view: View, durationMs: Long = 300, hideOnEnd: Boolean = true) {
         val anim = AlphaAnimation(1f, 0f).apply { duration = durationMs }
         anim.setAnimationListener(object : Animation.AnimationListener {
-            override fun onAnimationStart(a: Animation?) {}
-            override fun onAnimationRepeat(a: Animation?) {}
+            override fun onAnimationStart(a: Animation?) = Unit
+            override fun onAnimationRepeat(a: Animation?) = Unit
             override fun onAnimationEnd(a: Animation?) {
                 if (hideOnEnd) view.visibility = View.GONE
             }
@@ -140,8 +141,11 @@ class AnimationManager {
     }
 
     fun pulseView(view: View, repeat: Int = 3) {
-        val anim = AlphaAnimation(1f, 0.4f).apply {
-            duration = 400
+        val anim = AlphaAnimation(
+            PULSE_ALPHA_FROM,
+            PULSE_ALPHA_TO
+        ).apply {
+            duration = PULSE_DURATION_MS
             repeatCount = repeat
             repeatMode = Animation.REVERSE
         }
@@ -153,5 +157,17 @@ class AnimationManager {
         routeAnimator = null
         view.clearAnimation()
         handler.removeCallbacksAndMessages(null)
+    }
+
+    companion object {
+        private const val MIN_ANIM_DURATION_MS = 100L
+        private const val MAX_ANIM_DURATION_MS = 3000L
+        private const val MIN_PER_POINT_MS = 16L
+        private const val POP_SCALE_FROM = 0.6f
+        private const val POP_SCALE_TO = 1.0f
+        private const val POP_PIVOT = 0.5f
+        private const val PULSE_ALPHA_FROM = 1f
+        private const val PULSE_ALPHA_TO = 0.4f
+        private const val PULSE_DURATION_MS = 400L
     }
 }

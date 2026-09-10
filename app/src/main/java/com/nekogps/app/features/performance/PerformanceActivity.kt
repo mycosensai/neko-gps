@@ -49,7 +49,7 @@ class PerformanceActivity : AppCompatActivity() {
         ttsManager.init()
 
         batteryManager = BatteryOptimizationManager(this)
-        batteryManager.listener = object : BatteryOptimizationManager.Listener {
+        batteryManager.listener = object : BatteryOptimizationListener {
             override fun onIntervalChanged(ms: Long) { updateBatteryStatus() }
             override fun onBatteryStats(s: BatteryOptimizationManager.BatteryStats) { updateBatteryStatus() }
         }
@@ -75,19 +75,19 @@ class PerformanceActivity : AppCompatActivity() {
             ttsManager.speak(getString(R.string.performance_tts_demo))
         }
         findViewById<Button>(R.id.btn_tts_download).setOnClickListener {
-            ttsManager.downloadVoicePack(ttsManager.currentLanguageCode)
+            ttsManager.downloadVoicePack()
         }
         findViewById<Button>(R.id.btn_fade_demo).setOnClickListener {
-            animationManager.fadeOut(detailPane, 300, false)
-            animationManager.fadeIn(detailPane, 300)
+            animationManager.fadeOut(detailPane, FADE_DEMO_DURATION_MS, false)
+            animationManager.fadeIn(detailPane, FADE_DEMO_DURATION_MS)
         }
         val rateBar: SeekBar = findViewById(R.id.tts_rate_bar)
         rateBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(sb: SeekBar?, p: Int, fromUser: Boolean) {
-                if (fromUser) ttsManager.setSpeechRate(0.5f + p / 100f)
+                if (fromUser) ttsManager.setSpeechRate(MIN_SPEECH_RATE + p / RATE_DIVISOR)
             }
-            override fun onStartTrackingTouch(sb: SeekBar?) {}
-            override fun onStopTrackingTouch(sb: SeekBar?) {}
+            override fun onStartTrackingTouch(sb: SeekBar?) = Unit
+            override fun onStopTrackingTouch(sb: SeekBar?) = Unit
         })
 
         tabletManager.applyMode(listPane, detailPane)
@@ -118,7 +118,7 @@ class PerformanceActivity : AppCompatActivity() {
     }
 
     private fun updateTtsStatus() {
-        val packs = try { ttsManager.getVoicePacks() } catch (e: Exception) {
+        val packs = try { ttsManager.getVoicePacks() } catch (e: IllegalStateException) {
             Log.w("PerformanceActivity", "updateTtsStatus: suppressed Exception", e)
             emptyList() }
         val installed = packs.count { it.installed }
@@ -126,23 +126,30 @@ class PerformanceActivity : AppCompatActivity() {
     }
 
     private fun updateBatteryStatus() {
-        val s = try { batteryManager.getStats() } catch (e: Exception) {
+        val s = try { batteryManager.getStats() } catch (e: IllegalStateException) {
+            Log.w("PerformanceActivity", "updateBatteryStatus: suppressed Exception", e)
+            null } catch (e: SecurityException) {
             Log.w("PerformanceActivity", "updateBatteryStatus: suppressed Exception", e)
             null } ?: return
         batteryText.text = getString(
             R.string.performance_battery_status,
-            s.levelPercent, s.locationIntervalMs / 1000, if (s.isPowerSaveMode) 1 else 0
+            s.levelPercent,
+            s.locationIntervalMs / MILLIS_PER_SECOND,
+            if (s.isPowerSaveMode) 1 else 0
         )
         // Demo adaptive interval with a synthetic fix (no-op权重):
         try {
             val loc = Location(LocationManager.GPS_PROVIDER)
             batteryManager.onLocationUpdate(loc)
-        } catch (e: Exception) {
+        } catch (e: IllegalArgumentException) {
             Log.w("PerformanceActivity", "updateBatteryStatus: suppressed Exception", e)
             /* ignore */ }
     }
 
-    private fun demoMapJump() {
-        // Placeholder showing AnimationManager API alongside osmdroid types.
+    companion object {
+        private const val FADE_DEMO_DURATION_MS = 300L
+        private const val MIN_SPEECH_RATE = 0.5f
+        private const val RATE_DIVISOR = 100f
+        private const val MILLIS_PER_SECOND = 1000L
     }
 }

@@ -29,6 +29,11 @@ class TripComputerActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var isTracking = false
 
+    companion object {
+        private const val FASTEST_LOCATION_INTERVAL_MS = 500L
+        private const val MS_TO_KMH = 3.6
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityTripComputerBinding.inflate(layoutInflater)
@@ -73,19 +78,19 @@ class TripComputerActivity : AppCompatActivity() {
         }
 
         viewModel.averageSpeedKmh.observe(this) { speed ->
-            binding.tvAvgSpeed.text = String.format("%.1f km/h", speed)
+            binding.tvAvgSpeed.text = String.format(java.util.Locale.getDefault(), "%.1f km/h", speed)
         }
 
         viewModel.maxSpeedKmh.observe(this) { speed ->
-            binding.tvMaxSpeed.text = String.format("%.1f km/h", speed)
+            binding.tvMaxSpeed.text = String.format(java.util.Locale.getDefault(), "%.1f km/h", speed)
         }
 
         viewModel.currentSpeedKmh.observe(this) { speed ->
-            binding.tvCurrentSpeed.text = String.format("%.0f km/h", speed)
+            binding.tvCurrentSpeed.text = String.format(java.util.Locale.getDefault(), "%.0f km/h", speed)
         }
 
         viewModel.fuelCostEstimate.observe(this) { cost ->
-            binding.tvFuelCost.text = String.format("$%.2f", cost)
+            binding.tvFuelCost.text = String.format(java.util.Locale.getDefault(), "$%.2f", cost)
         }
 
         viewModel.isTripActive.observe(this) { isActive ->
@@ -125,7 +130,7 @@ class TripComputerActivity : AppCompatActivity() {
         val locationRequest = LocationRequest.create().apply {
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
             interval = TimeUnit.SECONDS.toMillis(1)
-            fastestInterval = TimeUnit.MILLISECONDS.toMillis(500)
+            fastestInterval = TimeUnit.MILLISECONDS.toMillis(FASTEST_LOCATION_INTERVAL_MS)
         }
 
         fusedLocationClient.requestLocationUpdates(
@@ -139,7 +144,7 @@ class TripComputerActivity : AppCompatActivity() {
         override fun onLocationResult(result: com.google.android.gms.location.LocationResult) {
             val loc = result.lastLocation ?: return
             val geoPoint = GeoPoint(loc.latitude, loc.longitude)
-            val speedKmh = (loc.speed * 3.6) // Convert m/s to km/h
+            val speedKmh = (loc.speed * MS_TO_KMH) // Convert m/s to km/h
             viewModel.updateLocation(geoPoint, speedKmh)
         }
     }

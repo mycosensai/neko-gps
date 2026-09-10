@@ -2,6 +2,7 @@ package com.nekogps.app.features.ui
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -94,10 +95,12 @@ class WearOSCompanion(context: Context) {
             val dataReq = req.javaClass.getMethod("asPutDataRequest").invoke(req)
             client.javaClass.getMethod("putDataItem", Class.forName("com.google.android.gms.wearable.PutDataRequest"))
                 .invoke(client, dataReq)
-        } catch (_: ClassNotFoundException) {
-            // Wearable API not on classpath — broadcast + prefs path still works.
-        } catch (_: Exception) {
-            // Never crash navigation because the watch sync failed.
+        } catch (e: ReflectiveOperationException) {
+            Log.w("WearOSCompanion", "Data Layer sync failed", e)
+        } catch (e: SecurityException) {
+            Log.w("WearOSCompanion", "Data Layer sync failed", e)
+        } catch (e: IllegalArgumentException) {
+            Log.w("WearOSCompanion", "Data Layer sync failed", e)
         }
     }
 }

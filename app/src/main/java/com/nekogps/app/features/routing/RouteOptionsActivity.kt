@@ -60,7 +60,7 @@ class RouteOptionsActivity : AppCompatActivity() {
 
     private fun updateMultiplierText(slider: Slider, textView: android.widget.TextView) {
         slider.addOnChangeListener { _, value, _ ->
-            textView.text = String.format("%.1fx", value)
+            textView.text = String.format(java.util.Locale.getDefault(), "%.1fx", value)
         }
     }
 
@@ -78,7 +78,10 @@ class RouteOptionsActivity : AppCompatActivity() {
             routeOptionsManager.setAvoidHighways(binding.switchAvoidHighways.isChecked)
             routeOptionsManager.setAvoidFerries(binding.switchAvoidFerries.isChecked)
             routeOptionsManager.setPenaltyMultiplier(AvoidanceType.TOLLS, binding.sliderTollPenalty.value.toDouble())
-            routeOptionsManager.setPenaltyMultiplier(AvoidanceType.HIGHWAYS, binding.sliderHighwayPenalty.value.toDouble())
+            routeOptionsManager.setPenaltyMultiplier(
+                AvoidanceType.HIGHWAYS,
+                binding.sliderHighwayPenalty.value.toDouble()
+            )
             routeOptionsManager.setPenaltyMultiplier(AvoidanceType.FERRIES, binding.sliderFerryPenalty.value.toDouble())
         }
     }

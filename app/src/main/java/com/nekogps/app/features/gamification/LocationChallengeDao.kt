@@ -27,7 +27,10 @@ interface LocationChallengeDao {
     @Update
     suspend fun update(challenge: LocationChallengeEntity)
 
-    @Query("UPDATE location_challenges SET currentValue = :value, completed = :completed, completedAt = :time WHERE challengeKey = :key")
+    @Query(
+        "UPDATE location_challenges SET currentValue = :value, " +
+            "completed = :completed, completedAt = :time WHERE challengeKey = :key"
+    )
     suspend fun updateProgress(key: String, value: Double, completed: Boolean, time: Long)
 
     @Query("DELETE FROM location_challenges")

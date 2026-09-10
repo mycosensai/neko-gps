@@ -10,6 +10,15 @@ import kotlinx.coroutines.flow.first
  * to a waypoint or bookmark.
  */
 class PhotoWaypointManager(context: Context) {
+    data class PhotoWaypointInput(
+        val waypointId: Long,
+        val bookmarkId: Long,
+        val photoPath: String,
+        val latitude: Double,
+        val longitude: Double,
+        val caption: String = ""
+    )
+
     private val dao = AppDatabase.getInstance(context).photoWaypointDao()
 
     val allPhotos: Flow<List<PhotoWaypointEntity>> = dao.getAllPhotos()
@@ -31,21 +40,14 @@ class PhotoWaypointManager(context: Context) {
     /**
      * Save a photo waypoint.
      */
-    suspend fun addPhotoWaypoint(
-        waypointId: Long,
-        bookmarkId: Long,
-        photoPath: String,
-        latitude: Double,
-        longitude: Double,
-        caption: String = ""
-    ): Long {
+    suspend fun addPhotoWaypoint(input: PhotoWaypointInput): Long {
         val photo = PhotoWaypointEntity(
-            waypointId = waypointId,
-            bookmarkId = bookmarkId,
-            photoPath = photoPath,
-            latitude = latitude,
-            longitude = longitude,
-            caption = caption
+            waypointId = input.waypointId,
+            bookmarkId = input.bookmarkId,
+            photoPath = input.photoPath,
+            latitude = input.latitude,
+            longitude = input.longitude,
+            caption = input.caption
         )
         return dao.insert(photo)
     }

@@ -56,27 +56,39 @@ class AlternativeRoutesActivity : AppCompatActivity() {
     }
 
     private fun calculateRoutes() {
-        val origin = GeoPoint(35.6762, 139.6503)
-        val destination = GeoPoint(35.6586, 139.7454)
+        val origin = GeoPoint(DEFAULT_ORIGIN_LATITUDE, DEFAULT_ORIGIN_LONGITUDE)
+        val destination = GeoPoint(DEFAULT_DESTINATION_LATITUDE, DEFAULT_DESTINATION_LONGITUDE)
         scope.launch {
-            val result = alternativeRoutes.calculateAlternatives(origin = origin, destination = destination, routeOptionsManager = routeOptionsManager)
+            val result = alternativeRoutes.calculateAlternatives(
+                origin = origin,
+                destination = destination,
+                routeOptionsManager = routeOptionsManager
+            )
             routeAdapter?.submitList(result.routes)
             binding.tvTitle.text = getString(R.string.route_found, result.totalCalculated)
         }
     }
 
     private fun selectRoute(route: AlternativeRoutes.AlternativeRoute) {
-        Toast.makeText(this, "${route.name}: ${DistanceCalculator.formatDistance(route.distanceMeters)}, ${DistanceCalculator.formatETA(route.etaMinutes)}", Toast.LENGTH_SHORT).show()
+        val distance = DistanceCalculator.formatDistance(route.distanceMeters)
+        val eta = DistanceCalculator.formatETA(route.etaMinutes)
+        Toast.makeText(this, "${route.name}: $distance, $eta", Toast.LENGTH_SHORT).show()
     }
 
-    inner class RouteOptionAdapter(private val onSelectClick: (AlternativeRoutes.AlternativeRoute) -> Unit) :
-        androidx.recyclerview.widget.ListAdapter<AlternativeRoutes.AlternativeRoute, RouteOptionAdapter.ViewHolder>(DIFF_CALLBACK) {
+    inner class RouteOptionAdapter(
+        private val onSelectClick: (AlternativeRoutes.AlternativeRoute) -> Unit
+    ) : androidx.recyclerview.widget.ListAdapter<
+            AlternativeRoutes.AlternativeRoute,
+            RouteOptionAdapter.ViewHolder
+            >(DIFF_CALLBACK) {
         override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): ViewHolder {
             val view = layoutInflater.inflate(R.layout.item_route_option, parent, false)
             return ViewHolder(view)
         }
         override fun onBindViewHolder(holder: ViewHolder, position: Int) { holder.bind(getItem(position)) }
-        inner class ViewHolder(itemView: android.view.View) : androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView) {
+        inner class ViewHolder(
+            itemView: android.view.View
+        ) : androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView) {
             private val tvRouteName: android.widget.TextView = itemView.findViewById(R.id.tvRouteName)
             private val tvRouteDistance: android.widget.TextView = itemView.findViewById(R.id.tvRouteDistance)
             private val tvRouteEta: android.widget.TextView = itemView.findViewById(R.id.tvRouteEta)
@@ -93,9 +105,19 @@ class AlternativeRoutesActivity : AppCompatActivity() {
     }
 
     companion object {
+        private const val DEFAULT_ORIGIN_LATITUDE = 35.6762
+        private const val DEFAULT_ORIGIN_LONGITUDE = 139.6503
+        private const val DEFAULT_DESTINATION_LATITUDE = 35.6586
+        private const val DEFAULT_DESTINATION_LONGITUDE = 139.7454
         val DIFF_CALLBACK = object : DiffUtil.ItemCallback<AlternativeRoutes.AlternativeRoute>() {
-            override fun areItemsTheSame(old: AlternativeRoutes.AlternativeRoute, new: AlternativeRoutes.AlternativeRoute) = old.id == new.id
-            override fun areContentsTheSame(old: AlternativeRoutes.AlternativeRoute, new: AlternativeRoutes.AlternativeRoute) = old == new
+            override fun areItemsTheSame(
+                old: AlternativeRoutes.AlternativeRoute,
+                new: AlternativeRoutes.AlternativeRoute
+            ) = old.id == new.id
+            override fun areContentsTheSame(
+                old: AlternativeRoutes.AlternativeRoute,
+                new: AlternativeRoutes.AlternativeRoute
+            ) = old == new
         }
     }
 }

@@ -20,6 +20,12 @@ import com.nekogps.app.R
  * FuelPriceActivity - displays nearby fuel stations sorted by price.
  */
 class FuelPriceActivity : AppCompatActivity() {
+    companion object {
+        private const val LOCATION_PERMISSION_REQUEST_CODE = 2001
+        private const val DEFAULT_LATITUDE = 40.7128
+        private const val DEFAULT_LONGITUDE = -74.0060
+    }
+
     private val fuelPriceManager = FuelPriceManager(this)
     private lateinit var adapter: FuelStationAdapter
     private var useMetric = true
@@ -68,7 +74,13 @@ class FuelPriceActivity : AppCompatActivity() {
     private fun setupUnitToggle() {
         findViewById<MaterialButton>(com.nekogps.app.R.id.btnToggleUnit).setOnClickListener {
             useMetric = !useMetric
-            findViewById<MaterialButton>(com.nekogps.app.R.id.btnToggleUnit).text = if (useMetric) getString(com.nekogps.app.R.string.toggle_unit) else getString(com.nekogps.app.R.string.gal_per_liter)
+            val toggleButton =
+                findViewById<MaterialButton>(com.nekogps.app.R.id.btnToggleUnit)
+            toggleButton.text = if (useMetric) {
+                getString(com.nekogps.app.R.string.toggle_unit)
+            } else {
+                getString(com.nekogps.app.R.string.gal_per_liter)
+            }
             adapter.setUseMetric(useMetric)
         }
     }
@@ -91,10 +103,14 @@ class FuelPriceActivity : AppCompatActivity() {
 
         if (filtered.isEmpty()) {
             findViewById<View>(com.nekogps.app.R.id.tvEmpty).visibility = View.VISIBLE
-            findViewById<androidx.recyclerview.widget.RecyclerView>(com.nekogps.app.R.id.rvFuelStations).visibility = View.GONE
+            findViewById<androidx.recyclerview.widget.RecyclerView>(
+                com.nekogps.app.R.id.rvFuelStations
+            ).visibility = View.GONE
         } else {
             findViewById<View>(com.nekogps.app.R.id.tvEmpty).visibility = View.GONE
-            findViewById<androidx.recyclerview.widget.RecyclerView>(com.nekogps.app.R.id.rvFuelStations).visibility = View.VISIBLE
+            findViewById<androidx.recyclerview.widget.RecyclerView>(
+                com.nekogps.app.R.id.rvFuelStations
+            ).visibility = View.VISIBLE
         }
     }
 
@@ -110,21 +126,21 @@ class FuelPriceActivity : AppCompatActivity() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 2001)
-            lastLocation = Location("").apply { latitude = 40.7128; longitude = -74.0060 }
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQUEST_CODE)
+            lastLocation = Location("").apply { latitude = DEFAULT_LATITUDE; longitude = DEFAULT_LONGITUDE }
         } else {
             lastLocation = (application as NekoGpsApp).getLastKnownLocation() ?: Location("").apply {
-                latitude = 40.7128; longitude = -74.0060
+                latitude = DEFAULT_LATITUDE; longitude = DEFAULT_LONGITUDE
             }
         }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 2001) {
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 lastLocation = (application as NekoGpsApp).getLastKnownLocation() ?: Location("").apply {
-                    latitude = 40.7128; longitude = -74.0060
+                    latitude = DEFAULT_LATITUDE; longitude = DEFAULT_LONGITUDE
                 }
                 loadStations()
             }

@@ -18,6 +18,11 @@ class TripRecordAdapter(
     private val onTripClick: (TripRecord) -> Unit = {}
 ) : ListAdapter<TripRecord, TripRecordAdapter.ViewHolder>(TripRecordDiffCallback()) {
 
+    companion object {
+        private const val SECONDS_PER_HOUR = 3600
+        private const val SECONDS_PER_MINUTE = 60
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(context)
             .inflate(com.nekogps.app.R.layout.item_trip_record, parent, false)
@@ -41,8 +46,8 @@ class TripRecordAdapter(
             tvTripDate.text = formatDate(trip.startTime)
             tvTripDistance.text = OdometerManager.formatDistance(trip.totalDistanceMeters)
 
-            val hours = trip.totalTimeSeconds / 3600
-            val mins = (trip.totalTimeSeconds % 3600) / 60
+            val hours = trip.totalTimeSeconds / SECONDS_PER_HOUR
+            val mins = (trip.totalTimeSeconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE
             tvTripTime.text = "${hours}h ${mins}m"
 
             tvTripSpeed.text = "%.0f km/h".format(trip.averageSpeedKmh)

@@ -2,6 +2,7 @@ package com.nekogps.app
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,6 +16,7 @@ import com.nekogps.app.features.ElevationProfileView
 import com.nekogps.app.utils.DistanceCalculator
 import org.osmdroid.util.GeoPoint
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -38,6 +40,9 @@ class TracksActivity : AppCompatActivity() {
 
     companion object {
         private const val TRACKS_PREF = "nekogps_tracks"
+        private const val MILLIS_PER_HOUR = 3600000L
+        private const val MILLIS_PER_MINUTE = 60000L
+        private const val MILLIS_PER_SECOND = 1000L
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -75,7 +80,9 @@ class TracksActivity : AppCompatActivity() {
             elevationProfileView.setTrackFromGeoPoints(track.points)
             elevationProfileView.visibility = View.VISIBLE
             tvElevationStats.visibility = View.VISIBLE
-            tvElevationStats.text = "↑ ${elevationProfileView.getTotalAscent().toInt()}m ascent | ↓ ${elevationProfileView.getTotalDescent().toInt()}m descent"
+            val ascent = elevationProfileView.getTotalAscent().toInt()
+            val descent = elevationProfileView.getTotalDescent().toInt()
+            tvElevationStats.text = "↑ ${ascent}m ascent | ↓ ${descent}m descent"
         }
     }
 
@@ -127,8 +134,8 @@ class TracksActivity : AppCompatActivity() {
                     )
                 )
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } catch (e: JSONException) {
+            Log.w("TracksActivity", "getStoredTracks: suppressed Exception", e)
         }
 
         return tracks
@@ -188,9 +195,9 @@ class TracksActivity : AppCompatActivity() {
             }
 
             private fun formatDuration(millis: Long): String {
-                val hours = millis / 3600000
-                val minutes = (millis % 3600000) / 60000
-                val seconds = (millis % 60000) / 1000
+                val hours = millis / MILLIS_PER_HOUR
+                val minutes = (millis % MILLIS_PER_HOUR) / MILLIS_PER_MINUTE
+                val seconds = (millis % MILLIS_PER_MINUTE) / MILLIS_PER_SECOND
                 return when {
                     hours > 0 -> String.format(Locale.US, "%dh %dm %ds", hours, minutes, seconds)
                     minutes > 0 -> String.format(Locale.US, "%dm %ds", minutes, seconds)

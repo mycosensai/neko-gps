@@ -32,6 +32,13 @@ class SettingsActivity : AppCompatActivity() {
 
     private lateinit var settingsDataStore: SettingsDataStore
 
+    companion object {
+        private const val GPS_INTERVAL_1S_MS = 1000L
+        private const val GPS_INTERVAL_2S_MS = 2000L
+        private const val GPS_INTERVAL_5S_MS = 5000L
+        private const val MAP_LAYER_HIKING_POS = 3
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
@@ -68,7 +75,7 @@ class SettingsActivity : AppCompatActivity() {
                     showToast("Map layer set to: $selected")
                 }
             }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
+            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
         }
     }
 
@@ -80,17 +87,17 @@ class SettingsActivity : AppCompatActivity() {
         spinnerGpsInterval.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selectedMs = when (position) {
-                    0 -> 1000L
-                    1 -> 2000L
-                    2 -> 5000L
-                    else -> 2000L
+                    0 -> GPS_INTERVAL_1S_MS
+                    1 -> GPS_INTERVAL_2S_MS
+                    2 -> GPS_INTERVAL_5S_MS
+                    else -> GPS_INTERVAL_2S_MS
                 }
                 lifecycleScope.launch {
                     settingsDataStore.setGpsInterval(selectedMs)
                     showToast("GPS interval set to: ${intervals[position]}")
                 }
             }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
+            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
         }
     }
 
@@ -146,7 +153,7 @@ class SettingsActivity : AppCompatActivity() {
             val layerPos = when (mapLayer) {
                 "Satellite" -> 1
                 "Cycle" -> 2
-                "Hiking" -> 3
+                "Hiking" -> MAP_LAYER_HIKING_POS
                 else -> 0
             }
             spinnerMapLayer.setSelection(layerPos)
@@ -154,8 +161,8 @@ class SettingsActivity : AppCompatActivity() {
             // GPS interval
             val gpsInterval = settingsDataStore.gpsInterval.first()
             val intervalPos = when (gpsInterval) {
-                1000L -> 0
-                5000L -> 2
+                GPS_INTERVAL_1S_MS -> 0
+                GPS_INTERVAL_5S_MS -> 2
                 else -> 1
             }
             spinnerGpsInterval.setSelection(intervalPos)

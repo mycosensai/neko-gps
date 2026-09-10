@@ -51,96 +51,11 @@ object GpxParser {
      * @return List of parsed GpxTrack objects
      */
     fun parse(inputStream: InputStream): List<GpxTrack> {
-        val tracks = mutableListOf<GpxTrack>()
         val factory = XmlPullParserFactory.newInstance()
         factory.isNamespaceAware = false
         val parser = factory.newPullParser()
         parser.setInput(inputStream, null)
-
-        var eventType = parser.eventType
-        var currentTrack: GpxTrackBuilder? = null
-        var currentSegmentPoints = mutableListOf<TrackPoint>()
-        var currentWaypoint: TrackPoint? = null
-        var currentTag = ""
-        var trackName = ""
-        var trackDescription = ""
-
-        while (eventType != XmlPullParser.END_DOCUMENT) {
-            when (eventType) {
-                XmlPullParser.START_TAG -> {
-                    currentTag = parser.name
-                    when (parser.name) {
-                        "trk" -> {
-                            currentTrack = GpxTrackBuilder()
-                            currentSegmentPoints = mutableListOf()
-                            trackName = ""
-                            trackDescription = ""
-                        }
-                        "trkseg" -> {
-                            currentSegmentPoints = mutableListOf()
-                        }
-                        "trkpt", "rtept", "wpt" -> {
-                            val lat = parser.getAttributeValue(null, "lat")?.toDoubleOrNull() ?: 0.0
-                            val lon = parser.getAttributeValue(null, "lon")?.toDoubleOrNull() ?: 0.0
-                            currentWaypoint = TrackPoint(latitude = lat, longitude = lon)
-                        }
-                    }
-                }
-                XmlPullParser.TEXT -> {
-                    val text = parser.text?.trim() ?: ""
-                    if (text.isNotEmpty() && currentWaypoint != null) {
-                        when (currentTag) {
-                            "ele" -> {
-                                currentWaypoint = currentWaypoint.copy(elevation = text.toDoubleOrNull())
-                            }
-                            "time" -> {
-                                val timestamp = parseGpxTime(text)
-                                currentWaypoint = currentWaypoint.copy(time = timestamp)
-                            }
-                            "speed" -> {
-                                currentWaypoint = currentWaypoint.copy(speed = text.toDoubleOrNull())
-                            }
-                        }
-                    } else if (text.isNotEmpty() && currentTrack != null) {
-                        when (currentTag) {
-                            "name" -> trackName = text
-                            "desc" -> trackDescription = text
-                        }
-                    }
-                }
-                XmlPullParser.END_TAG -> {
-                    when (parser.name) {
-                        "trkpt", "rtept" -> {
-                            currentWaypoint?.let { currentSegmentPoints.add(it) }
-                            currentWaypoint = null
-                        }
-                        "wpt" -> {
-                            // Waypoints can be handled separately if needed
-                            currentWaypoint = null
-                        }
-                        "trkseg" -> {
-                            // Segment complete, points already in the list
-                        }
-                        "trk" -> {
-                            val allPoints = currentSegmentPoints.toList()
-                            val track = GpxTrack(
-                                name = trackName.ifEmpty { "Unnamed Track" },
-                                description = trackDescription,
-                                points = allPoints,
-                                startTime = allPoints.firstOrNull()?.time,
-                                endTime = allPoints.lastOrNull()?.time
-                            )
-                            tracks.add(track)
-                            currentTrack = null
-                        }
-                    }
-                    currentTag = ""
-                }
-            }
-            eventType = parser.next()
-        }
-
-        return tracks
+        return GpxDocumentParser(parser).parse()
     }
 
     /**
@@ -149,11 +64,11 @@ object GpxParser {
     private fun parseGpxTime(timeStr: String): Long? {
         return try {
             dateFormat.parse(timeStr)?.time
-        } catch (e: Exception) {
+        } catch (e: java.text.ParseException) {
             Log.w("GpxParser", "parseGpxTime: suppressed Exception", e)
             try {
                 dateFormatWithMillis.parse(timeStr)?.time
-            } catch (e2: Exception) {
+            } catch (e2: java.text.ParseException) {
                 Log.w("GpxParser", "parseGpxTime: suppressed Exception", e2)
                 null
             }
@@ -185,23 +100,131 @@ object GpxParser {
      * Get total duration of a GPX track in milliseconds.
      */
     fun getTrackDuration(track: GpxTrack): Long {
-        val start = track.startTime ?: return 0L
-        val end = track.endTime ?: return 0L
-        return end - start
+        return computeTrackDuration(track.startTime, track.endTime)
+    }
+
+    private fun computeTrackDuration(startTime: Long?, endTime: Long?): Long {
+        return if (startTime == null || endTime == null) 0L else endTime - startTime
     }
 
     /**
      * Get elevation gain (total ascent) in meters.
      */
     fun getElevationGain(track: GpxTrack): Double {
-        var gain = 0.0
-        for (i in 1 until track.points.size) {
-            val prevElev = track.points[i - 1].elevation ?: continue
-            val currElev = track.points[i].elevation ?: continue
-            val diff = currElev - prevElev
-            if (diff > 0) gain += diff
+        return track.points.asSequence()
+            .mapNotNull { it.elevation }
+            .zipWithNext()
+            .map { (prev, curr) -> curr - prev }
+            .filter { it > 0 }
+            .sum()
+    }
+
+    /**
+     * Stateful pull-parser that converts GPX XML events into [GpxTrack] objects.
+     * Split out of [parse] so each event type is handled by a small focused function.
+     */
+    private class GpxDocumentParser(private val parser: XmlPullParser) {
+        private val tracks = mutableListOf<GpxTrack>()
+        private var currentTrack: GpxTrackBuilder? = null
+        private var currentSegmentPoints = mutableListOf<TrackPoint>()
+        private var currentWaypoint: TrackPoint? = null
+        private var currentTag = ""
+        private var trackName = ""
+        private var trackDescription = ""
+
+        fun parse(): List<GpxTrack> {
+            var eventType = parser.eventType
+            while (eventType != XmlPullParser.END_DOCUMENT) {
+                dispatchEvent(eventType)
+                eventType = parser.next()
+            }
+            return tracks
         }
-        return gain
+
+        private fun dispatchEvent(eventType: Int) {
+            when (eventType) {
+                XmlPullParser.START_TAG -> handleStartTag()
+                XmlPullParser.TEXT -> handleText()
+                XmlPullParser.END_TAG -> handleEndTag()
+            }
+        }
+
+        private fun handleStartTag() {
+            currentTag = parser.name
+            when (parser.name) {
+                "trk" -> startTrack()
+                "trkseg" -> currentSegmentPoints = mutableListOf()
+                "trkpt", "rtept", "wpt" -> startWaypoint()
+            }
+        }
+
+        private fun startTrack() {
+            currentTrack = GpxTrackBuilder()
+            currentSegmentPoints = mutableListOf()
+            trackName = ""
+            trackDescription = ""
+        }
+
+        private fun startWaypoint() {
+            val lat = parser.getAttributeValue(null, "lat")?.toDoubleOrNull() ?: 0.0
+            val lon = parser.getAttributeValue(null, "lon")?.toDoubleOrNull() ?: 0.0
+            currentWaypoint = TrackPoint(latitude = lat, longitude = lon)
+        }
+
+        private fun handleText() {
+            val text = parser.text?.trim() ?: ""
+            if (text.isEmpty()) return
+            if (currentWaypoint != null) {
+                applyWaypointText(text)
+            } else if (currentTrack != null) {
+                applyTrackText(text)
+            }
+        }
+
+        private fun applyWaypointText(text: String) {
+            val waypoint = currentWaypoint ?: return
+            currentWaypoint = when (currentTag) {
+                "ele" -> waypoint.copy(elevation = text.toDoubleOrNull())
+                "time" -> waypoint.copy(time = parseGpxTime(text))
+                "speed" -> waypoint.copy(speed = text.toDoubleOrNull())
+                else -> waypoint
+            }
+        }
+
+        private fun applyTrackText(text: String) {
+            when (currentTag) {
+                "name" -> trackName = text
+                "desc" -> trackDescription = text
+            }
+        }
+
+        private fun handleEndTag() {
+            when (parser.name) {
+                "trkpt", "rtept" -> {
+                    currentWaypoint?.let { currentSegmentPoints.add(it) }
+                    currentWaypoint = null
+                }
+                "wpt" -> {
+                    // Waypoints can be handled separately if needed
+                    currentWaypoint = null
+                }
+                "trk" -> finishTrack()
+            }
+            currentTag = ""
+        }
+
+        private fun finishTrack() {
+            val allPoints = currentSegmentPoints.toList()
+            val track = GpxTrack(
+                name = trackName.ifEmpty { "Unnamed Track" },
+                description = trackDescription,
+                points = allPoints,
+                startTime = allPoints.firstOrNull()?.time,
+                endTime = allPoints.lastOrNull()?.time
+            )
+            tracks.add(track)
+            currentTrack = null
+        }
     }
 
     /**

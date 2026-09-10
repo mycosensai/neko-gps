@@ -25,6 +25,8 @@ class SettingsDataStore(private val context: Context) {
         val DISTANCE_UNITS = stringPreferencesKey("distance_units")
         val THEME = stringPreferencesKey("theme")
         val AUTO_CENTER = booleanPreferencesKey("auto_center")
+
+        private const val DEFAULT_GPS_INTERVAL_MS = 2000L
     }
 
     // Map Layer Preference
@@ -40,7 +42,7 @@ class SettingsDataStore(private val context: Context) {
 
     // GPS Update Interval
     val gpsInterval: Flow<Long> = context.dataStore.data.map { preferences ->
-        preferences[GPS_INTERVAL] ?: 2000L
+        preferences[GPS_INTERVAL] ?: DEFAULT_GPS_INTERVAL_MS
     }
 
     suspend fun setGpsInterval(intervalMs: Long) {

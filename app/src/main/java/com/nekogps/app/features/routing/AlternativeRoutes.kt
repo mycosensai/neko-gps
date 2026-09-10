@@ -1,6 +1,5 @@
 package com.nekogps.app.features.routing
 
-import android.content.Context
 import android.util.Log
 import com.nekogps.app.utils.DistanceCalculator
 import org.osmdroid.util.GeoPoint
@@ -9,12 +8,10 @@ import kotlinx.coroutines.runBlocking
 import kotlin.math.abs
 import kotlin.math.sqrt
 
-class AlternativeRoutes(private val context: Context) {
+class AlternativeRoutes {
     companion object {
         private const val TAG = "AlternativeRoutes"
-        private const val NUM_ALTERNATIVES = 3
         private const val DEFAULT_AVG_SPEED_KMH = 50.0
-        private const val SCENIC_SCORE_WEIGHT = 0.3
     }
 
     data class AlternativeRoute(
@@ -46,7 +43,7 @@ class AlternativeRoutes(private val context: Context) {
 
     private suspend fun calculateRoute(id: Int, origin: GeoPoint, destination: GeoPoint, waypoints: List<GeoPoint>, offsetFactor: Double, preference: AlternativeRoute.RoutePreference, routeOptionsManager: RouteOptionsManager?): AlternativeRoute {
         val intermediatePoints = generateIntermediatePoints(origin, destination, offsetFactor)
-        val routePoints = mutableListOf<GeoPoint>().apply { add(origin); if (waypoints.isNotEmpty()) { val splitPoint = waypoints.size / 2; addAll(intermediatePoints.take(intermediatePoints.size / 2)); addAll(waypoints); addAll(intermediatePoints.drop(intermediatePoints.size / 2)) } else { addAll(intermediatePoints) }; add(destination) }
+        val routePoints = mutableListOf<GeoPoint>().apply { add(origin); if (waypoints.isNotEmpty()) { addAll(intermediatePoints.take(intermediatePoints.size / 2)); addAll(waypoints); addAll(intermediatePoints.drop(intermediatePoints.size / 2)) } else { addAll(intermediatePoints) }; add(destination) }
         val dedupedPoints = routePoints.distinctBy { "${it.latitude},${it.longitude}" }
         var totalDistance = 0.0
         for (i in 0 until dedupedPoints.size - 1) {

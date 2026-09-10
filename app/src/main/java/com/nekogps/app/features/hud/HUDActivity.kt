@@ -39,7 +39,6 @@ class HUDActivity : AppCompatActivity() {
     private var isMirrored = true
 
     companion object {
-        private const val TAG = "HUDActivity"
         private const val ARROW_STRAIGHT = "↑"
         private const val ARROW_LEFT = "←"
         private const val ARROW_RIGHT = "→"
@@ -68,7 +67,7 @@ class HUDActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        speedLimitManager = SpeedLimitManager(this)
+        speedLimitManager = SpeedLimitManager()
 
         setupUI()
         setupSpeedLimitManager()

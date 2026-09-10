@@ -33,9 +33,7 @@ class AchievementActivity : AppCompatActivity() {
 
     private fun initViews() {
         recyclerView = findViewById(R.id.rvAchievements)
-        adapter = AchievementAdapter(
-            onCheckClick = { checkAllAchievements() }
-        )
+        adapter = AchievementAdapter()
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
 

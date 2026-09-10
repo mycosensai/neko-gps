@@ -17,6 +17,7 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import android.util.Log
 
 /**
  * Weather overlay that fetches data from OpenWeatherMap API (free tier).
@@ -225,6 +226,7 @@ class WeatherOverlay @JvmOverloads constructor(
             val month = months[parts[1].toInt() - 1]
             "$month ${parts[2]}"
         } catch (e: Exception) {
+            Log.w("WeatherOverlay", "formatDate: suppressed Exception", e)
             dateStr
         }
     }

@@ -16,7 +16,7 @@ import org.osmdroid.util.GeoPoint
 
 class AlternativeRoutesActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAlternativeRoutesBinding
-    private val alternativeRoutes by lazy { AlternativeRoutes(this) }
+    private val alternativeRoutes by lazy { AlternativeRoutes() }
     private val routeOptionsManager by lazy { RouteOptionsManager(this) }
     private val scope = CoroutineScope(Dispatchers.Main)
     private var routeAdapter: RouteOptionAdapter? = null

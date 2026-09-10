@@ -12,7 +12,6 @@ class StatisticsDashboard(private val context: Context) {
     private val routeHistoryManager = RouteHistoryManager(context)
 
     private val sdf = java.text.SimpleDateFormat("MMM dd", java.util.Locale.getDefault())
-    private val sdfMonth = java.text.SimpleDateFormat("MMM yyyy", java.util.Locale.getDefault())
 
     suspend fun getStats(period: OdometerManager.Period): StatsSummary {
         val now = System.currentTimeMillis()

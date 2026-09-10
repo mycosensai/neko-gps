@@ -1,7 +1,6 @@
 package com.nekogps.app.features.performance
 
 import android.app.Activity
-import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Rect
 import android.os.Build
@@ -14,7 +13,7 @@ import android.view.View
  * against the current dependency set: screen-size / orientation / hinge-gap
  * heuristics drive posture detection.
  */
-class FoldableSupportManager(private val context: Context) {
+class FoldableSupportManager {
 
     enum class Posture { FLAT_CLOSED, HALF_FOLDED, FLAT_OPEN, DUAL_SCREEN }
 
@@ -117,7 +116,9 @@ class FoldableSupportManager(private val context: Context) {
                 val cutout = activity.window?.decorView?.rootWindowInsets?.displayCutout
                 cutout?.boundingRects?.firstOrNull()
             } else null
-        } catch (e: Exception) { null }
+        } catch (e: Exception) {
+            Log.w("FoldableSupportManager", "hingeBounds: suppressed Exception", e)
+            null }
     }
 
     companion object {

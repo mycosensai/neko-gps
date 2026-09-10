@@ -6,6 +6,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.nekogps.app.utils.DistanceCalculator
 import org.osmdroid.util.GeoPoint
+import android.util.Log
 
 /**
  * Data class representing a speed camera location.
@@ -89,6 +90,7 @@ class SpeedCameraManager private constructor(private val context: Context) {
         return try {
             gson.fromJson(json, type) ?: emptyList()
         } catch (e: Exception) {
+            Log.w("SpeedCameraManager", "getCameras: suppressed Exception", e)
             emptyList()
         }
     }

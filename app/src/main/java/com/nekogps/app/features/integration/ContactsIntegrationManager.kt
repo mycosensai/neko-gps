@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.ContactsContract
+import android.util.Log
 
 /** Contact with a postal address usable for navigation. */
 data class NavigableContact(
@@ -48,8 +49,10 @@ class ContactsIntegrationManager(private val context: Context) {
                 }
             }
         } catch (se: SecurityException) {
+            Log.w("ContactsIntegrationManager", "searchContactsByName: suppressed SecurityException", se)
             return emptyList()
         } catch (e: Exception) {
+            Log.w("ContactsIntegrationManager", "searchContactsByName: suppressed Exception", e)
             return emptyList()
         }
         return result
@@ -65,6 +68,7 @@ class ContactsIntegrationManager(private val context: Context) {
             context.startActivity(intent)
             true
         } catch (e: Exception) {
+            Log.w("ContactsIntegrationManager", "navigateToContact: suppressed Exception", e)
             false
         }
     }

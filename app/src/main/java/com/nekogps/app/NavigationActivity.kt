@@ -54,7 +54,6 @@ class NavigationActivity : AppCompatActivity() {
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST = 1001
-        private const val TAG = "NavigationActivity"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,7 +64,7 @@ class NavigationActivity : AppCompatActivity() {
         Configuration.getInstance().userAgentValue = packageName
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        speedLimitManager = SpeedLimitManager(this)
+        speedLimitManager = SpeedLimitManager()
         ttsService = TextToSpeechService(this)
         speedCameraManager = SpeedCameraManager.getInstance(this)
 

@@ -22,11 +22,6 @@ class SimpleBarChart @JvmOverloads constructor(
         color = Color.parseColor("#cbb7fb") // Lavender Glow
         style = Paint.Style.FILL
     }
-    private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#714cb6") // Amethyst
-        style = Paint.Style.STROKE
-        strokeWidth = 1f
-    }
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#e9e5dd") // Warm Cream
         textSize = 36f

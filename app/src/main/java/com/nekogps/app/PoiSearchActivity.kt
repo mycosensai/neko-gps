@@ -40,7 +40,6 @@ class PoiSearchActivity : AppCompatActivity() {
     private var selectedCategory: String = "Restaurant"
 
     companion object {
-        private const val TAG = "PoiSearchActivity"
         private const val NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
         private const val DEFAULT_LAT = 40.7128
         private const val DEFAULT_LNG = -74.0060

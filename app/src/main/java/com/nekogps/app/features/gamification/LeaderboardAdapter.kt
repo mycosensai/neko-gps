@@ -16,7 +16,6 @@ import com.google.android.material.button.MaterialButton
  * Supports user entries and friend entries with different visual styles.
  */
 class LeaderboardAdapter(
-    private val onAddFriendClick: () -> Unit = {},
     private val onDeleteFriendClick: (LeaderboardEntryEntity) -> Unit = {}
 ) : ListAdapter<LeaderboardEntryEntity, LeaderboardAdapter.ViewHolder>(DIFF_CALLBACK) {
 

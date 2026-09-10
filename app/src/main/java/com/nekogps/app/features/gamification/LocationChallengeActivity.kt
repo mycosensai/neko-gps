@@ -57,7 +57,6 @@ class LocationChallengeActivity : AppCompatActivity() {
     }
 
     private fun updateStats(challenges: List<LocationChallengeEntity>) {
-        val active = challenges.count { !it.completed }
         val completed = challenges.count { it.completed }
         findViewById<TextView>(R.id.tvStats).text = "$completed / ${challenges.size} Completed"
     }

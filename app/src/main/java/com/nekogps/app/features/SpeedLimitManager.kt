@@ -1,6 +1,5 @@
 package com.nekogps.app.features
 
-import android.content.Context
 import android.media.ToneGenerator
 import android.media.AudioManager
 import android.util.Log
@@ -16,7 +15,7 @@ import java.net.URL
  * SpeedLimitManager parses maxspeed tags from OpenStreetMap data via Overpass API.
  * Displays current road's speed limit and warns visually/audibly when exceeding limit.
  */
-class SpeedLimitManager(private val context: Context) {
+class SpeedLimitManager {
 
     companion object {
         private const val TAG = "SpeedLimitManager"
@@ -138,6 +137,7 @@ class SpeedLimitManager(private val context: Context) {
                 else -> maxspeed.toIntOrNull()
             }
         } catch (e: Exception) {
+            Log.w("SpeedLimitManager", "parseMaxSpeedValue: suppressed Exception", e)
             null
         }
     }

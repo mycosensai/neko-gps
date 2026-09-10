@@ -33,7 +33,6 @@ class LeaderboardActivity : AppCompatActivity() {
     private fun initViews() {
         recyclerView = findViewById(R.id.rvLeaderboard)
         adapter = LeaderboardAdapter(
-            onAddFriendClick = { showAddFriendDialog() },
             onDeleteFriendClick = { friend -> confirmDeleteFriend(friend) }
         )
         recyclerView.layoutManager = LinearLayoutManager(this)

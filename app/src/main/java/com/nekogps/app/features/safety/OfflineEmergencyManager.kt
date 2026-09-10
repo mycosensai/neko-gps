@@ -109,6 +109,7 @@ class OfflineEmergencyManager private constructor(private val context: Context) 
         return try {
             gson.fromJson(json, type) ?: emptyList()
         } catch (e: Exception) {
+            Log.w("OfflineEmergencyManager", "getICEContacts: suppressed Exception", e)
             emptyList()
         }
     }
@@ -217,6 +218,7 @@ class OfflineEmergencyManager private constructor(private val context: Context) 
         return try {
             gson.fromJson(json, type) ?: emptyList()
         } catch (e: Exception) {
+            Log.w("OfflineEmergencyManager", "getCachedHospitals: suppressed Exception", e)
             emptyList()
         }
     }

@@ -6,6 +6,7 @@ import android.media.session.MediaController
 import android.media.session.MediaSessionManager
 import android.os.Build
 import android.view.KeyEvent
+import android.util.Log
 
 /**
  * Media controls for music apps (Spotify, YouTube Music, etc.) shown in the
@@ -23,6 +24,7 @@ class MusicControlsManager(private val context: Context) {
         return try {
             context.getSystemService(Context.MEDIA_SESSION_SERVICE) as? MediaSessionManager
         } catch (e: Exception) {
+            Log.w("MusicControlsManager", "sessionManager: suppressed Exception", e)
             null
         }
     }
@@ -38,13 +40,16 @@ class MusicControlsManager(private val context: Context) {
                     c.playbackState?.state ==
                         android.media.session.PlaybackState.STATE_PLAYING
                 } catch (e: Exception) {
+                    Log.w("MusicControlsManager", "getActivePlayers: suppressed Exception", e)
                     false
                 }
                 PlayerState(c.packageName.orEmpty(), playing)
             }
         } catch (se: SecurityException) {
+            Log.w("MusicControlsManager", "getActivePlayers: suppressed SecurityException", se)
             emptyList()
         } catch (e: Exception) {
+            Log.w("MusicControlsManager", "getActivePlayers: suppressed Exception", e)
             emptyList()
         }
     }
@@ -67,6 +72,7 @@ class MusicControlsManager(private val context: Context) {
             context.sendBroadcast(intentUp)
             true
         } catch (e: Exception) {
+            Log.w("MusicControlsManager", "dispatchKey: suppressed Exception", e)
             false
         }
     }

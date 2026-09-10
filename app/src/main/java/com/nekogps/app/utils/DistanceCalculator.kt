@@ -12,7 +12,6 @@ import kotlin.math.sqrt
 object DistanceCalculator {
 
     private const val EARTH_RADIUS_METERS = 6_371_000.0
-    private const val EARTH_RADIUS_MILES = 3_959.0
     private const val METERS_PER_KM = 1000.0
     private const val METERS_PER_MILE = 1609.344
 

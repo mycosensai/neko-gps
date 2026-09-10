@@ -16,9 +16,7 @@ import java.util.*
  * AchievementAdapter - RecyclerView adapter for displaying achievements.
  * Shows unlocked and locked achievements with their icons and descriptions.
  */
-class AchievementAdapter(
-    private val onCheckClick: () -> Unit = {}
-) : ListAdapter<AchievementEntity, AchievementAdapter.ViewHolder>(DIFF_CALLBACK) {
+class AchievementAdapter : ListAdapter<AchievementEntity, AchievementAdapter.ViewHolder>(DIFF_CALLBACK) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)

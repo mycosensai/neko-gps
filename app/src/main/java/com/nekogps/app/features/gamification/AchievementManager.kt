@@ -134,9 +134,6 @@ class AchievementManager(context: Context) {
         val distanceKm = totalDistanceMeters / 1000.0
 
         val definitions = getAllAchievementDefinitions()
-        val milestoneDefs = definitions.filter {
-            it.key.startsWith("first_") && it.key.contains("km")
-        }
 
         val thresholds = mapOf(
             "first_km" to 1.0,

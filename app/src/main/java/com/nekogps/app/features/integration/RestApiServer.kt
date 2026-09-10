@@ -8,6 +8,7 @@ import com.google.gson.Gson
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.util.UUID
+import android.util.Log
 
 /**
  * Tiny localhost REST stub for 3rd-party apps (Tasker, Home Assistant, ...).
@@ -97,6 +98,7 @@ class RestApiServer(private val context: Context) {
             )
             true
         } catch (e: Exception) {
+            Log.w("RestApiServer", "openNavigation: suppressed Exception", e)
             false
         }
     }

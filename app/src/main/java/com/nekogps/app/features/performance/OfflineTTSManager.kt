@@ -72,7 +72,9 @@ class OfflineTTSManager(private val context: Context) : TextToSpeech.OnInitListe
         return supportedLanguages.map { pack ->
             val avail = try {
                 engine?.isLanguageAvailable(pack.locale)
-            } catch (e: Exception) { TextToSpeech.LANG_MISSING_DATA }
+            } catch (e: Exception) {
+                Log.w("OfflineTTSManager", "getVoicePacks: suppressed Exception", e)
+                TextToSpeech.LANG_MISSING_DATA }
             pack.copy(
                 installed = avail == TextToSpeech.LANG_AVAILABLE ||
                     avail == TextToSpeech.LANG_COUNTRY_AVAILABLE ||
@@ -90,7 +92,9 @@ class OfflineTTSManager(private val context: Context) : TextToSpeech.OnInitListe
             ?: return false
         val res = try {
             tts?.setLanguage(pack.locale) ?: TextToSpeech.LANG_MISSING_DATA
-        } catch (e: Exception) { TextToSpeech.LANG_MISSING_DATA }
+        } catch (e: Exception) {
+            Log.w("OfflineTTSManager", "selectLanguage: suppressed Exception", e)
+            TextToSpeech.LANG_MISSING_DATA }
         val ok = res == TextToSpeech.LANG_AVAILABLE ||
             res == TextToSpeech.LANG_COUNTRY_AVAILABLE ||
             res == TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE
@@ -109,6 +113,7 @@ class OfflineTTSManager(private val context: Context) : TextToSpeech.OnInitListe
             context.startActivity(intent)
             true
         } catch (e: Exception) {
+            Log.w("OfflineTTSManager", "downloadVoicePack: suppressed Exception", e)
             listener?.onError("No TTS data installer found")
             false
         }
@@ -120,29 +125,40 @@ class OfflineTTSManager(private val context: Context) : TextToSpeech.OnInitListe
         return try {
             engine.speak(text, queueMode, params, utteranceId) == TextToSpeech.SUCCESS
         } catch (e: Exception) {
+            Log.w("OfflineTTSManager", "speak: suppressed Exception", e)
             Log.w(TAG, "speak failed: " + e.message)
             false
         }
     }
 
-    fun stop() { try { tts?.stop() } catch (e: Exception) { /* ignore */ } }
+    fun stop() { try { tts?.stop() } catch (e: Exception) {
+        Log.w("OfflineTTSManager", "stop: suppressed Exception", e)
+        /* ignore */ } }
 
     fun setSpeechRate(rate: Float) {
         prefs.edit().putFloat(KEY_RATE, rate).apply()
-        try { tts?.setSpeechRate(rate) } catch (e: Exception) { /* ignore */ }
+        try { tts?.setSpeechRate(rate) } catch (e: Exception) {
+            Log.w("OfflineTTSManager", "setSpeechRate: suppressed Exception", e)
+            /* ignore */ }
     }
 
     fun setPitch(pitch: Float) {
         prefs.edit().putFloat(KEY_PITCH, pitch).apply()
-        try { tts?.setPitch(pitch) } catch (e: Exception) { /* ignore */ }
+        try { tts?.setPitch(pitch) } catch (e: Exception) {
+            Log.w("OfflineTTSManager", "setPitch: suppressed Exception", e)
+            /* ignore */ }
     }
 
     fun getAvailableVoices(): Set<Voice> {
-        return try { tts?.voices ?: emptySet() } catch (e: Exception) { emptySet() }
+        return try { tts?.voices ?: emptySet() } catch (e: Exception) {
+            Log.w("OfflineTTSManager", "getAvailableVoices: suppressed Exception", e)
+            emptySet() }
     }
 
     fun shutdown() {
-        try { tts?.shutdown() } catch (e: Exception) { /* ignore */ }
+        try { tts?.shutdown() } catch (e: Exception) {
+            Log.w("OfflineTTSManager", "shutdown: suppressed Exception", e)
+            /* ignore */ }
         tts = null
         ready = false
     }

@@ -38,7 +38,6 @@ class TracksActivity : AppCompatActivity() {
 
     companion object {
         private const val TRACKS_PREF = "nekogps_tracks"
-        private const val TAG = "TracksActivity"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

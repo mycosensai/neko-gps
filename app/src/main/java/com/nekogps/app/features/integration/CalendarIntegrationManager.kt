@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.CalendarContract
+import android.util.Log
 
 /** Simple calendar event with an optional location. */
 data class CalendarEvent(
@@ -59,8 +60,10 @@ class CalendarIntegrationManager(private val context: Context) {
                 }
             }
         } catch (se: SecurityException) {
+            Log.w("CalendarIntegrationManager", "getUpcomingEventsWithLocation: suppressed SecurityException", se)
             return emptyList()
         } catch (e: Exception) {
+            Log.w("CalendarIntegrationManager", "getUpcomingEventsWithLocation: suppressed Exception", e)
             return emptyList()
         }
         return result
@@ -76,6 +79,7 @@ class CalendarIntegrationManager(private val context: Context) {
             context.startActivity(intent)
             true
         } catch (e: Exception) {
+            Log.w("CalendarIntegrationManager", "navigateToEvent: suppressed Exception", e)
             false
         }
     }

@@ -15,8 +15,6 @@ import kotlin.math.sqrt
  */
 object CoordinateConverter {
 
-    private const val EARTH_RADIUS = 6_371_000.0
-    private const val UTM_SCALE_FACTOR = 0.9996
     private const val EQUATORIAL_RADIUS = 6_378_137.0
     private const val ECCENTRICITY_SQUARED = 0.00669438
     private const val K0 = 0.9996

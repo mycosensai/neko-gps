@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import com.nekogps.app.R
 import org.osmdroid.util.GeoPoint
+import android.util.Log
 
 /**
  * Phase 10: Performance & Polish hub screen.
@@ -56,7 +57,7 @@ class PerformanceActivity : AppCompatActivity() {
 
         animationManager = AnimationManager()
         tabletManager = TabletLayoutManager(this)
-        foldableManager = FoldableSupportManager(this)
+        foldableManager = FoldableSupportManager()
         foldableManager.listener = object : FoldableSupportManager.FoldableListener {
             override fun onPostureChanged(p: FoldableSupportManager.Posture) {
                 postureText.text = getString(R.string.performance_posture, p.name)
@@ -117,13 +118,17 @@ class PerformanceActivity : AppCompatActivity() {
     }
 
     private fun updateTtsStatus() {
-        val packs = try { ttsManager.getVoicePacks() } catch (e: Exception) { emptyList() }
+        val packs = try { ttsManager.getVoicePacks() } catch (e: Exception) {
+            Log.w("PerformanceActivity", "updateTtsStatus: suppressed Exception", e)
+            emptyList() }
         val installed = packs.count { it.installed }
         statusText.text = getString(R.string.performance_tts_status, installed, packs.size)
     }
 
     private fun updateBatteryStatus() {
-        val s = try { batteryManager.getStats() } catch (e: Exception) { null } ?: return
+        val s = try { batteryManager.getStats() } catch (e: Exception) {
+            Log.w("PerformanceActivity", "updateBatteryStatus: suppressed Exception", e)
+            null } ?: return
         batteryText.text = getString(
             R.string.performance_battery_status,
             s.levelPercent, s.locationIntervalMs / 1000, if (s.isPowerSaveMode) 1 else 0
@@ -132,11 +137,12 @@ class PerformanceActivity : AppCompatActivity() {
         try {
             val loc = Location(LocationManager.GPS_PROVIDER)
             batteryManager.onLocationUpdate(loc)
-        } catch (e: Exception) { /* ignore */ }
+        } catch (e: Exception) {
+            Log.w("PerformanceActivity", "updateBatteryStatus: suppressed Exception", e)
+            /* ignore */ }
     }
 
     private fun demoMapJump() {
         // Placeholder showing AnimationManager API alongside osmdroid types.
-        val unused = GeoPoint(35.68, 139.69)
     }
 }

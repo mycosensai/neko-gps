@@ -1,6 +1,5 @@
 package com.nekogps.app.features.integration
 
-import android.content.Context
 import android.content.Intent
 import android.speech.RecognizerIntent
 import java.util.Locale
@@ -27,7 +26,7 @@ enum class VoiceAction {
  * Recognition itself uses the platform speech-recognizer intent; parsing is a
  * small on-device matcher so no network or extra dependency is required.
  */
-class VoiceAssistantManager(private val context: Context) {
+class VoiceAssistantManager {
 
     /** Intent the caller can launch with startActivityForResult. */
     fun buildRecognitionIntent(prompt: String = "Say a command"): Intent {

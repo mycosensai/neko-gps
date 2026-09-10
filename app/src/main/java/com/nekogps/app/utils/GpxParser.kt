@@ -7,6 +7,7 @@ import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
+import android.util.Log
 
 /**
  * Utility for parsing GPX (GPS Exchange Format) files into track point lists.
@@ -149,9 +150,11 @@ object GpxParser {
         return try {
             dateFormat.parse(timeStr)?.time
         } catch (e: Exception) {
+            Log.w("GpxParser", "parseGpxTime: suppressed Exception", e)
             try {
                 dateFormatWithMillis.parse(timeStr)?.time
             } catch (e2: Exception) {
+                Log.w("GpxParser", "parseGpxTime: suppressed Exception", e2)
                 null
             }
         }

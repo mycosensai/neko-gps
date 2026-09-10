@@ -78,6 +78,7 @@ class EmergencySOSManager private constructor(private val context: Context) {
         return try {
             com.google.gson.Gson().fromJson(json, type) ?: emptyList()
         } catch (e: Exception) {
+            Log.w("EmergencySOSManager", "getEmergencyContacts: suppressed Exception", e)
             emptyList()
         }
     }

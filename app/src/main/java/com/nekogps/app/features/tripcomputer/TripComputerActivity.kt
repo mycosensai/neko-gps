@@ -27,12 +27,7 @@ class TripComputerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityTripComputerBinding
     private lateinit var viewModel: TripComputerViewModel
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private val handler = Handler(Looper.getMainLooper())
     private var isTracking = false
-
-    companion object {
-        private const val TAG = "TripComputerActivity"
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

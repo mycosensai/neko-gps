@@ -86,8 +86,12 @@ class BatteryOptimizationManager(private val context: Context) {
     fun stopTracking() {
         if (!tracking) return
         tracking = false
-        try { context.unregisterReceiver(batteryReceiver) } catch (e: Exception) { /* ignore */ }
-        try { context.unregisterReceiver(powerSaveReceiver) } catch (e: Exception) { /* ignore */ }
+        try { context.unregisterReceiver(batteryReceiver) } catch (e: Exception) {
+            Log.w("BatteryOptimizationManager", "stopTracking: suppressed Exception", e)
+            /* ignore */ }
+        try { context.unregisterReceiver(powerSaveReceiver) } catch (e: Exception) {
+            Log.w("BatteryOptimizationManager", "stopTracking: suppressed Exception", e)
+            /* ignore */ }
     }
 
     /**
@@ -122,7 +126,9 @@ class BatteryOptimizationManager(private val context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 powerManager?.isDeviceIdleMode ?: false
             } else false
-        } catch (e: Exception) { false }
+        } catch (e: Exception) {
+            Log.w("BatteryOptimizationManager", "isDozeMode: suppressed Exception", e)
+            false }
     }
 
     /** Suggest whether background tracking should back off right now. */
@@ -144,7 +150,9 @@ class BatteryOptimizationManager(private val context: Context) {
         val prev = lastLocation ?: return 0f
         val dt = (location.time - prev.time) / 1000f
         if (dt <= 0f) return 0f
-        return try { prev.distanceTo(location) / dt } catch (e: Exception) { 0f }
+        return try { prev.distanceTo(location) / dt } catch (e: Exception) {
+            Log.w("BatteryOptimizationManager", "estimateSpeed: suppressed Exception", e)
+            0f }
     }
 
     private fun trackDrain(pct: Int) {
@@ -174,7 +182,9 @@ class BatteryOptimizationManager(private val context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 bm?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY) ?: lastLevel
             } else lastLevel
-        } catch (e: Exception) { lastLevel }
+        } catch (e: Exception) {
+            Log.w("BatteryOptimizationManager", "readLevel: suppressed Exception", e)
+            lastLevel }
     }
 
     private fun isChargingNow(): Boolean {
@@ -183,7 +193,9 @@ class BatteryOptimizationManager(private val context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 bm?.isCharging ?: false
             } else false
-        } catch (e: Exception) { false }
+        } catch (e: Exception) {
+            Log.w("BatteryOptimizationManager", "isChargingNow: suppressed Exception", e)
+            false }
     }
 
     companion object {

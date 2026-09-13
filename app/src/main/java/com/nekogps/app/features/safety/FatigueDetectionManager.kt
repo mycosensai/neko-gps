@@ -36,6 +36,25 @@ class FatigueDetectionManager private constructor(private val context: Context) 
         private const val DEFAULT_AUTO_PAUSE_THRESHOLD_KMH = 5.0f
         private const val MIN_SPEED_FOR_DRIVING_KMH = 10.0f
 
+        // Break interval / warning bounds
+        private const val MIN_BREAK_INTERVAL_MINUTES = 30
+        private const val MAX_BREAK_INTERVAL_MINUTES = 480
+        private const val MIN_WARNING_BEFORE_MINUTES = 1
+        private const val MAX_WARNING_BEFORE_MINUTES = 60
+        private const val MIN_AUTO_PAUSE_THRESHOLD_KMH = 1f
+        private const val MAX_AUTO_PAUSE_THRESHOLD_KMH = 20f
+
+        // Time & geometry
+        private const val MILLIS_PER_MINUTE = 60_000L
+        private const val PERIODIC_UPDATE_INTERVAL_MS = 30_000L
+        private const val FULL_CIRCLE_DEGREES = 360.0
+        private const val KM_PER_DEGREE_LATITUDE = 111.0
+
+        // Sample rest-stop generation
+        private const val MOCK_REST_STOP_COUNT = 5
+        private const val MOCK_MIN_DISTANCE_KM = 5
+        private const val MOCK_DISTANCE_RANGE_KM = 15
+
         @Volatile
         private var instance: FatigueDetectionManager? = null
 

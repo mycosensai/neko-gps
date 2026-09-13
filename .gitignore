@@ -1,24 +1,83 @@
-# Gradle
-.gradle/
+# ─────────────────────────────────────────────────────────────
+# Build outputs
+# ─────────────────────────────────────────────────────────────
 build/
-!gradle/wrapper/gradle-wrapper.jar
+app/build/
+.gradle/
+*.apk
+*.aab
+*.ap_
+*.dex
+output.json
+release/
 
-# Large build tools
+# ─────────────────────────────────────────────────────────────
+# Gradle wrapper — the jar MUST be committed for reproducible builds
+# ─────────────────────────────────────────────────────────────
+!gradle/wrapper/gradle-wrapper.jar
+!gradlew
+!gradlew.bat
+
+# ─────────────────────────────────────────────────────────────
+# Machine-local configuration (never commit — holds SDK path + signing secrets)
+# ─────────────────────────────────────────────────────────────
+local.properties
+setup_env.sh
+.gradle_env
+
+# ─────────────────────────────────────────────────────────────
+# Signing material — never commit keys
+# ─────────────────────────────────────────────────────────────
+*.keystore
+*.jks
+release.keystore
+keystore.properties
+
+# ─────────────────────────────────────────────────────────────
+# Larger vendored tooling downloaded locally (re-fetch on demand)
+# ─────────────────────────────────────────────────────────────
 gradle-8.4/
 gradle-8.4-bin.zip
 gh.zip
 gh_extracted/
+detekt/*.jar
+gradle-*.zip
 
-# Local config
-local.properties
-release.keystore
-*.keystore
-*.jks
-.gradle_env
-setup_env.sh
+# ─────────────────────────────────────────────────────────────
+# Generated analysis reports
+# ─────────────────────────────────────────────────────────────
+detekt/*.txt
+detekt/*.html
+detekt/reports/
+lint-results*.html
+lint-results*.txt
+lint-results*.xml
 
-# IDE
+# ─────────────────────────────────────────────────────────────
+# Logs & scratch
+# ─────────────────────────────────────────────────────────────
+*.log
+emulator*.log
+emu*.log
+sdk_*.log
+*.hprof
+hs_err_pid*
+.attach_pid*
+
+# ─────────────────────────────────────────────────────────────
+# IDE / OS
+# ─────────────────────────────────────────────────────────────
 .idea/
 *.iml
+*.ipr
+*.iws
+out/
 .DS_Store
-*.log
+Thumbs.db
+desktop.ini
+.cxx/
+
+# ─────────────────────────────────────────────────────────────
+# NOTE: app/schemas/ (Room schemas) is intentionally COMMITTED —
+# it is the source of truth for database migrations.
+# ─────────────────────────────────────────────────────────────

@@ -20,22 +20,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Fixed by applying `kotlin-kapt`, routing Room's compiler through `kapt`, and
   upgrading Room to 2.6.1. The APK now contains 14 generated DAO/database
   implementations (previously zero).
-- Release signing pointed at a non-existent keystore path (`../release.keystore`
-  resolved outside the project), so release artefacts were not signed with the
-  intended key.
-- Removed two orphaned helper classes (`SafetyCrashHelper`,
-  `SafetyEmergencyContactsHelper`) that duplicated logic already present in
-  `SafetyActivity` and broke compilation by reaching into private members.
-- Restored `private` visibility on 21 `SafetyActivity` methods that had been
-  inadvertently widened.
-
-### Security
-- Removed hard-coded keystore passwords from `app/build.gradle`. Signing
-  credentials are now read from `local.properties` (git-ignored) or environment
-  variables, and the signing config is only registered when the keystore
-  actually exists.
-
-### Fixed (release-only)
+- **Background tracking silently stopped whenever the map screen closed.**
+  `LocationTrackingService` was only ever *bound* (`BIND_AUTO_CREATE`), never
+  foreground-*started*, so the system destroyed it when the UI unbounded. It
+  now exposes `onStartCommand` (`START_STICKY`) and is started with
+  `ContextCompat.startForegroundService`, keeping the tracker and its
+  notification alive in the background.
+- **The app crashed at startup on devices without Google Play Services.**
+  `NekoGpsApp`, the tracking service, navigation, HUD and trip computer all
+  called `LocationServices.getFusedLocationProviderClient` unconditionally,
+  which throws on GMS-less devices. New `LocationClients` helper returns null
+  when Play Services is absent; `LocationTrackingService` now falls back to the
+  platform `LocationManager`, and `NekoGpsApp` reads the platform's last known
+  fix instead of crashing.
+- **The tracking notification was invisible on Android 13+.** `POST_NOTIFICATIONS`
+  was declared but never requested; it is now part of the first-run permission
+  request.
+- **Package visibility broke runtime intent resolution on Android 11+.**
+  `resolveActivity` for the camera and share intents returned null without a
+  `<queries>` declaration, silently disabling photo waypoints and some share
+  options. Manifest now declares the intents.
+- osmdroid never called `Configuration.load(...)`, so tile caches targeted the
+  external-storage path that is not writable on Android 10+.
 - **Gson generic deserialisation would have broken only in release builds.**
   The ProGuard rules did not preserve the `Signature` attribute, so
   `TypeToken<List<…>>` lost its type argument and JSON would silently
@@ -49,21 +55,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a child of a sibling `CardView` rather than a sibling of the RecyclerView.
   The constraint could never resolve, so the list mis-sized at runtime. Now
   points at the sibling `@id/cvSelectRoute`.
-- Lint ran with `abortOnError false`, so nothing caught the above. Lint is now
-  a hard gate (see below) and the project is lint-clean with no baseline.
+- Release signing pointed at a non-existent keystore path (`../release.keystore`
+  resolved outside the project), so release artefacts were not signed with the
+  intended key.
 
-### Added
-- 31 JVM unit tests. `DatabaseCodegenTest` is a regression guard for the Room
-  bug above: it opens both databases in memory, asserts every DAO is present,
-  loads the generated `*_Impl` classes by name, and round-trips a bookmark
-  through the generated DAO.
-- `LICENSE` (MIT), matching what the README already claimed.
-- `.github/workflows/android.yml` — CI running tests, lint and both APK builds
-  on every push and pull request.
-- `docs/DEVELOPMENT.md` — build, test, sign and release guide.
-- `tools/emulator.sh` + `tools/README.md` — emulator setup, hardware
-  acceleration diagnosis and graphics-backend guidance.
-- `CHANGELOG.md`.
+### Security & privacy
+- **Launcher icon was a system resource** (`@android:drawable/ic_menu_mylocation`)
+  and the mipmap folders were empty — the app had no real icon. A branded
+  adaptive icon set (purple paw on Mysteria Purple) with full PNG fallbacks for
+  API 24–25 is now shipped; generation script kept in `tools/generate_icons.py`.
+- **Backup was enabled and included sensitive data** — medical info, emergency
+  contacts, location history and waypoints were eligible for Google cloud
+  backup. `allowBackup` is now false: for a "mine only" GPS app the data stays
+  on-device. (A user-controlled export/import feature is the intended
+  replacement; see roadmap.)
+- **Global cleartext traffic was allowed** while every network call in the app
+  is HTTPS. Replaced with a `networkSecurityConfig` that refuses cleartext
+  except on localhost (the optional REST API server).
+- Removed hard-coded keystore passwords from `app/build.gradle`. Signing
+  credentials are now read from `local.properties` (git-ignored) or environment
+  variables, and the signing config is only registered when the keystore
+  exists.
+- Removed three unused dangerous permissions (`BODY_SENSORS`,
+  `HIGH_SAMPLING_RATE_SENSORS`, `FOREGROUND_SERVICE_HEALTH`).
 
 ### Changed
 - `versionName` / `versionCode` now match the shipped release train (1.4.0 / 4);
@@ -71,23 +85,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Debug builds use the application id suffix `.debug` and a `-debug` version
   suffix so debug and release installs can coexist on one device.
 - Release builds enable `shrinkResources` in addition to R8 minification.
-- Lint is now a build gate (`abortOnError true`, baseline-backed) instead of
-  `abortOnError false`, which silently allowed broken code to ship.
+- Lint is now a hard build gate (`abortOnError true`, no baseline) instead of
+  `abortOnError false`, which silently allowed broken code to ship. The project
+  is currently lint-clean.
 - Added `BuildConfig.GIT_SHA` and `BuildConfig.BUILD_TIME` for traceable builds.
 - Room now exports schemas to `app/schemas` so migrations are reviewable in git.
 - `gradle.properties` sets `android.nonTransitiveRClass` and parallel/daemon
   defaults for faster local iteration.
+- Restored `private` visibility on 21 `SafetyActivity` methods and removed two
+  orphaned helper classes that duplicated existing logic.
 
 ### Added
-- Test dependencies for Robolectric-backed unit tests, AndroidX Test, Espresso
-  and coroutine test support.
-- `docs/DEVELOPMENT.md` — how to set up, build, test, sign and release.
-- `tools/` directory holding the emulator helper scripts that previously
-  littered the repository root.
+- 31 JVM unit tests. `DatabaseCodegenTest` is a regression guard for the Room
+  bug above: it opens both databases in memory, asserts every DAO is present,
+  loads the generated `*_Impl` classes by name, and round-trips a bookmark
+  through the generated DAO. `DistanceCalculatorTest` covers distance, bearing,
+  ETA and formatting maths.
+- `LICENSE` (MIT), matching what the README already claimed.
+- `.github/workflows/android.yml` — CI running tests, lint and both APK builds
+  on every push and pull request (pending `workflow` token scope).
+- `docs/DEVELOPMENT.md` — build, test, sign and release guide.
+- `tools/emulator.sh`, `tools/README.md` and `tools/generate_icons.py`.
+- `CHANGELOG.md`.
 
 ### Removed
-- Committed scratch artefacts: per-run detekt report dumps, emulator logs,
-  a 67 MB detekt CLI jar and 11 MB `gh.zip`, all of which bloated the repo.
+- Committed scratch artefacts: per-run detekt report dumps, a 67 MB detekt CLI
+  jar, emulator logs, `gh.zip` and ad-hoc emulator batch scripts.
 
 ## [1.3.0] — 2026-09-10
 

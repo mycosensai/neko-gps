@@ -92,7 +92,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_chevron_right"
-            android:tint="#dcd7d3" />
+            app:tint="#dcd7d3" />
     </LinearLayout>
 
 </androidx.cardview.widget.CardView>

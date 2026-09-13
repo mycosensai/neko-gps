@@ -8,7 +8,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.location.LocationRequest
 import com.google.android.material.slider.Slider
@@ -26,7 +25,7 @@ class TripComputerActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityTripComputerBinding
     private lateinit var viewModel: TripComputerViewModel
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private var fusedLocationClient: FusedLocationProviderClient? = null
     private var isTracking = false
 
     companion object {
@@ -40,7 +39,7 @@ class TripComputerActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         viewModel = ViewModelProvider(this)[TripComputerViewModel::class.java]
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        fusedLocationClient = com.nekogps.app.utils.LocationClients.fused(this)
 
         setupUI()
         observeViewModel()
@@ -110,7 +109,7 @@ class TripComputerActivity : AppCompatActivity() {
     private fun stopTrip() {
         isTracking = false
         viewModel.stopTrip()
-        fusedLocationClient.removeLocationUpdates(locationCallback)
+        fusedLocationClient?.removeLocationUpdates(locationCallback)
         Toast.makeText(this, "Trip stopped", Toast.LENGTH_SHORT).show()
     }
 
@@ -127,13 +126,20 @@ class TripComputerActivity : AppCompatActivity() {
     }
 
     private fun requestLocationUpdates() {
+        if (androidx.core.app.ActivityCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
         val locationRequest = LocationRequest.create().apply {
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
             interval = TimeUnit.SECONDS.toMillis(1)
             fastestInterval = TimeUnit.MILLISECONDS.toMillis(FASTEST_LOCATION_INTERVAL_MS)
         }
 
-        fusedLocationClient.requestLocationUpdates(
+        fusedLocationClient?.requestLocationUpdates(
             locationRequest,
             locationCallback,
             Looper.getMainLooper()
@@ -151,6 +157,6 @@ class TripComputerActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        fusedLocationClient.removeLocationUpdates(locationCallback)
+        fusedLocationClient?.removeLocationUpdates(locationCallback)
     }
 }

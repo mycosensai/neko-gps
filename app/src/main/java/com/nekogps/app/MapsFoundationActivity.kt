@@ -9,6 +9,7 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.nekogps.app.features.ElevationProfileView
 import com.nekogps.app.features.TrafficLayer
 import com.nekogps.app.features.TrafficOverlay
@@ -152,6 +153,9 @@ open class MapsFoundationActivity : AppCompatActivity() {
 
     protected fun bindLocationService() {
         val intent = Intent(this, LocationTrackingService::class.java)
+        // Foreground start keeps tracking alive when the UI closes (the service
+        // posts the persistent notification and survives unbinding).
+        ContextCompat.startForegroundService(this, intent)
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
     }
 

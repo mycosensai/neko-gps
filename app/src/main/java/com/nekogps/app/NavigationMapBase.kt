@@ -37,7 +37,7 @@ open class NavigationMapBase : AppCompatActivity() {
     }
 
     protected lateinit var binding: ActivityNavigationBinding
-    protected lateinit var fusedLocationClient: FusedLocationProviderClient
+    protected var fusedLocationClient: FusedLocationProviderClient? = null
     protected lateinit var speedLimitManager: SpeedLimitManager
     protected lateinit var ttsService: TextToSpeechService
     protected lateinit var speedCameraManager: SpeedCameraManager
@@ -126,7 +126,7 @@ open class NavigationMapBase : AppCompatActivity() {
             fastestInterval = TimeUnit.SECONDS.toMillis(1)
         }
 
-        fusedLocationClient.requestLocationUpdates(
+        fusedLocationClient?.requestLocationUpdates(
             locationRequest,
             object : com.google.android.gms.location.LocationCallback() {
                 override fun onLocationResult(result: com.google.android.gms.location.LocationResult) {

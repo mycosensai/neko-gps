@@ -7,7 +7,6 @@ import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.location.LocationRequest
 import com.nekogps.app.R
@@ -26,7 +25,7 @@ import java.util.concurrent.TimeUnit
 class HUDActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHudBinding
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private var fusedLocationClient: FusedLocationProviderClient? = null
     private lateinit var speedLimitManager: SpeedLimitManager
     private lateinit var displayHelper: HudDisplayHelper
     private val handler = Handler(Looper.getMainLooper())
@@ -62,7 +61,7 @@ class HUDActivity : AppCompatActivity() {
         setContentView(binding.root)
         displayHelper = HudDisplayHelper(binding, this)
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        fusedLocationClient = com.nekogps.app.utils.LocationClients.fused(this)
         speedLimitManager = SpeedLimitManager()
 
         setupUI()
@@ -136,13 +135,20 @@ class HUDActivity : AppCompatActivity() {
     }
 
     private fun requestLocationUpdates() {
+        if (androidx.core.app.ActivityCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
         val locationRequest = LocationRequest.create().apply {
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
             interval = TimeUnit.SECONDS.toMillis(1)
             fastestInterval = TimeUnit.MILLISECONDS.toMillis(FASTEST_LOCATION_INTERVAL_MS)
         }
 
-        fusedLocationClient.requestLocationUpdates(
+        fusedLocationClient?.requestLocationUpdates(
             locationRequest,
             object : com.google.android.gms.location.LocationCallback() {
                 override fun onLocationResult(result: com.google.android.gms.location.LocationResult) {
@@ -201,7 +207,7 @@ class HUDActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         speedLimitManager.cleanup()
-        fusedLocationClient.removeLocationUpdates(object : com.google.android.gms.location.LocationCallback() {})
+        fusedLocationClient?.removeLocationUpdates(object : com.google.android.gms.location.LocationCallback() {})
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 

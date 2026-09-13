@@ -10,8 +10,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.location.LocationRequest
 import com.nekogps.app.databinding.ActivityNavigationBinding
@@ -65,7 +63,7 @@ class NavigationActivity : NavigationMapBase() {
 
         Configuration.getInstance().userAgentValue = packageName
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        fusedLocationClient = com.nekogps.app.utils.LocationClients.fused(this)
         speedLimitManager = SpeedLimitManager()
         ttsService = TextToSpeechService(this)
         speedCameraManager = SpeedCameraManager.getInstance(this)

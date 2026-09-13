@@ -67,10 +67,10 @@ class StatisticsActivity : AppCompatActivity() {
             val tab = findViewById<MaterialButton>(id)
             if (i == periodOrdinal) {
                 tab.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_blue_light))
-                tab.setTextColor(android.R.color.black)
+                tab.setTextColor(androidx.core.content.ContextCompat.getColor(this, android.R.color.black))
             } else {
                 tab.setBackgroundColor(ContextCompat.getColor(this, android.R.color.darker_gray))
-                tab.setTextColor(android.R.color.white)
+                tab.setTextColor(androidx.core.content.ContextCompat.getColor(this, android.R.color.white))
             }
         }
     }

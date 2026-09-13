@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  All network calls in the app are HTTPS (OSM tiles, Nominatim, Overpass,
+  Open-Meteo, Google Maps deep links). Cleartext is refused globally; the
+  only permitted exception is localhost for the optional REST API server
+  (features/integration/RestApiServer.kt), which binds to 127.0.0.1.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>

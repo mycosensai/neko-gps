@@ -30,4 +30,5 @@
     <color name="solarized_base2">#eee8d5</color>
     <color name="solarized_base01">#586e75</color>
     <color name="solarized_blue">#268bd2</color>
+    <color name="ic_launcher_background">#1b1938</color>
 </resources>
